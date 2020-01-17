@@ -1,27 +1,29 @@
 *PPD-Adobe: "4.3"
 *%%%% PPD file for Ricoh Aficio SP 100 with CUPS.
 *%%%% Created by Serge V Shistarev from PPD built for Ricoh Aficio SP 100
+*%%%% Modified by mishta-real (github.com/mishta-real)
+*%%%% Last change: 17.01.2020
 *FormatVersion: "4.3"
-*FileVersion: "1.0"
+*FileVersion: "1.1"
 *LanguageVersion: English
 *LanguageEncoding: ISOLatin1
 *PCFileName: "rsp100.ppd"
 *Product: "(Ricoh Aficio SP 100)"
 *Manufacturer: "Ricoh"
-*ModelName: "Ricoh Aficio SP 100"
-*ShortNickName: "Ricoh Aficio SP 100"
-*NickName: "Ricoh Aficio SP 100, pstoricohddst-gdi 0.5 alpha"
+*ModelName: "Aficio SP 100"
+*ShortNickName: "Aficio SP 100"
+*NickName: "Ricoh Aficio SP 100"
 *PSVersion: "(3010.000) 0"
 *LanguageLevel: "3"
 *ColorDevice: False
 *DefaultColorSpace: Gray
 *FileSystem: False
-*Throughput: "1"
+*Throughput: "13"
 *LandscapeOrientation: Plus90
 *TTRasterizer: Type42
 *% Driver-defined attributes...
 *1284DeviceID: "MFG:MFPrinter ;MDL:Laser Pro LL;CMD:AUTOMATIC,PJL,GDI_RL;DES:MFPrinter Laser Pro LL;CLS:PRINTER;VER:v1.03e ;NS:L507124L8090042;"
-*cupsVersion: 1.6
+*cupsVersion: 2.2
 *cupsModelNumber: 0
 *cupsManualCopies: False
 *cupsFilter: "application/vnd.cups-postscript 100 pstoricohddst-gdi"

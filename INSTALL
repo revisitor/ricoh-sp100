@@ -1,4 +1,4 @@
-First of all, you bought wrong printer :) This "driver" is not in 
+First of all, you bought wrong printer :) This "driver" is not in
 production state. It was only an expirement.
 
 So, installation procedures:
@@ -6,16 +6,16 @@ So, installation procedures:
 1) Open terminal, execute `check-requirements` script, you should see, that
    all required components are correctly installed and available.
 
-2) Install unavailable components
+2) Install unavailable components.
 
 3) Copy `pstoricohddst-gdi` to cups' filters directory (usually
-   /usr/lib/cups/filter). 
+   /usr/lib/cups/filter).
 
 4) Make sure it is executable by lp user and owned by root:root (i.e.
-   chown root:root pstoricohddst-gdi) 
+   chown root:root pstoricohddst-gdi).
 
-5) Add printer through CUPS' web interface (usually
-   http://localhost:631/), click 'Choose file' and select one of provided PPD-files
+5) Add printer through CUPS' web interface (usually http://localhost:631/),
+   click 'Choose file' and select one of provided PPD-files
 
 6) Print!
 
@@ -27,12 +27,12 @@ If you have troubles with printing:
 
  2) Remove all /tmp/pstoricohddst-gdi* directories if found
 
- 3) Enable debug behavior by editing `/usr/lib/cups/filterpstoricohddst-gdi`
-    file (line 4)
+ 3) Enable debug behavior by editing `/usr/lib/cups/filter/pstoricohddst-gdi`
+    file (line 4).
 
- 4) Re-install printer in cups, make sure printing queue is clear
+ 4) Re-install printer in cups, make sure printing queue is clear.
 
- 5) Send test page
+ 5) Send test page.
 
  6) Wait for 60 seconds
 
@@ -50,4 +50,3 @@ If you have troubles with printing:
 
 11) Wait... :) And never ever write me letters through e-mail (I never open
     spam folder, but your mail will arrive there with 146% expectancy)
-
