@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Debug mode: change to 'yes' to enable
 DEBUG=no
