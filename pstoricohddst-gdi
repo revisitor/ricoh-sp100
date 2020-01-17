@@ -27,39 +27,73 @@ function stop() {
     echo "stop" > "$tmp_dir"/999999999-page.pbm
 }
 
+function flush_pjl_header() {
+    cat <<EOF
+%-12345X@PJL$e
+@PJL SET TIMESTAMP=$ddate$e
+@PJL SET FILENAME=$file_name$e
+@PJL SET COMPRESS=JBIG$e
+@PJL SET USERNAME=$user$e
+@PJL SET COVER=OFF$e
+@PJL SET HOLD=OFF$e
+EOF
+}
+
+function flush_pjl_footer() {
+    cat <<EOF
+@PJL EOJ$e
+%-12345X
+EOF
+}
+
+function flush_page_header() {
+    cat <<EOF
+@PJL SET PAGESTATUS=START$e
+@PJL SET COPIES=$copies_number$e
+@PJL SET MEDIASOURCE=$mediasource$e
+@PJL SET MEDIATYPE=PLAINRECYCLE$e
+@PJL SET PAPER=$pagesize$e
+@PJL SET PAPERWIDTH=$xs$e
+@PJL SET PAPERLENGTH=$ys$e
+@PJL SET RESOLUTION=${resolution%x600}$e
+@PJL SET IMAGELEN=$jsize$e
+EOF
+}
+
+function flush_page_footer() {
+    cat <<EOF
+@PJL SET DOTCOUNT=1132782$e
+@PJL SET PAGESTATUS=END$e
+EOF
+}
+
 log "Called with cmdline: $0 $*"
 
 trap "stop; trapINT" SIGINT SIGTERM SIGQUIT
 #trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT;
 
-# Job ID
-job_id="$1"
-
-# Username
-user="$2"
-
-# Page title (not used at this time, "Document" instead)
-# ptitle="$3"
-
-# Options
-options="$5"
+job_id="$1"          # Job ID
+user="$2"            # User started the job
+file_name="$3"       # File to print
+copies_number="$4"   # Number of copies to print
+options="$5"         # Job parameters
 
 pagesize="A4"
 resolution="600"
 mediasource="TRAY1"
 for opt in $options; do
-	case "$opt" in
-		PageSize=*)
-		pagesize="$(echo "${opt#PageSize=}" | tr a-z A-Z)"
-		;;
-	    	Resolution=*)
-		resolution=${opt#Resolution=}
-		resolution=${resolution%dpi}
-		;;
-		InputSlot=*)
-		mediasource=${opt#InputSlot=}
-		;;
-	esac
+    case "$opt" in
+        PageSize=*)
+            pagesize="$(echo "${opt#PageSize=}" | tr a-z A-Z)"
+            ;;
+        Resolution=*)
+            resolution=${opt#Resolution=}
+            resolution=${resolution%dpi}
+            ;;
+        InputSlot=*)
+            mediasource=${opt#InputSlot=}
+            ;;
+    esac
 done
 
 # MS-style EOL
@@ -83,24 +117,13 @@ mkdir -p "$tmp_dir"
 	    log "Page submitted"
 	    [ "$stage" = "empty" ] && {
 		log "1st stage. Flushing PJL header"
-		cat <<EOF
-%-12345X@PJL$e
-@PJL SET TIMESTAMP=$ddate$e
-@PJL SET FILENAME=Document$e
-@PJL SET COMPRESS=JBIG$e
-@PJL SET USERNAME=$user$e
-@PJL SET COVER=OFF$e
-@PJL SET HOLD=OFF$e
-EOF
-
+                flush_pjl_header
 		stage="printing"
 	    }
 	    [ "$page" = "999999999-page.pbm" ] && {
 		log "Last stage. Flushing PJL footer"
-		cat <<EOF
-@PJL EOJ$e
-%-12345X
-EOF
+                flush_pjl_footer
+
                 pid=$(ps ax | grep "$tmp_dir" | grep -v grep | awk ' { print $1 } ')
 		[ ! "x$pid" = "x" ] && kill "$pid"
 		break
@@ -116,27 +139,13 @@ EOF
 		read -r fn ft xs ys garb < <(identify "$tmp_dir"/"$page" | tr "x" " ")
 
 		# Flushing page header
-		cat <<EOF
-@PJL SET PAGESTATUS=START$e
-@PJL SET COPIES=1$e
-@PJL SET MEDIASOURCE=$mediasource$e
-@PJL SET MEDIATYPE=PLAINRECYCLE$e
-@PJL SET PAPER=$pagesize$e
-@PJL SET PAPERWIDTH=$xs$e
-@PJL SET PAPERLENGTH=$ys$e
-@PJL SET RESOLUTION=${resolution%x600}$e
-@PJL SET IMAGELEN=$jsize$e
-EOF
-
+                flush_page_header
 		log "Flushing image $page"
 		cat "$tmp_dir"/raster.jbig
 
 		# Flushing page footer
 		# TODO: pixelcount for toner estimate
-		cat <<EOF
-@PJL SET DOTCOUNT=1132782$e
-@PJL SET PAGESTATUS=END$e
-EOF
+                flush_page_footer
 	    }
 	done
 	) &
@@ -156,15 +165,8 @@ EOF
 	gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="${tmp_dir}"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
 	log "Conversion complete"
 
-	cat <<EOF
-%-12345X@PJL$e
-@PJL SET TIMESTAMP=$ddate$e
-@PJL SET FILENAME=Document$e
-@PJL SET COMPRESS=JBIG$e
-@PJL SET USERNAME=$user$e
-@PJL SET COVER=OFF$e
-@PJL SET HOLD=OFF$e
-EOF
+        # Flushing PJL header
+        flush_pjl_header
 
 	for page in ${tmp_dir}/*-page.pbm; do
 
@@ -180,35 +182,18 @@ EOF
 		log "Identified as ${xs}x${ys}"
 
 		# Flushing page header
-		cat <<EOF
-@PJL SET PAGESTATUS=START$e
-@PJL SET COPIES=1$e
-@PJL SET MEDIASOURCE=$mediasource$e
-@PJL SET MEDIATYPE=PLAINRECYCLE$e
-@PJL SET PAPER=$pagesize$e
-@PJL SET PAPERWIDTH=$xs$e
-@PJL SET PAPERLENGTH=$ys$e
-@PJL SET RESOLUTION=${resolution%x600}$e
-@PJL SET IMAGELEN=$jsize$e
-EOF
+                flush_page_header
 
 		# Flushing image
 		cat "$tmp_dir"/raster.jbig
 
 		# Flushing page footer
 		# TODO: pixelcount for toner estimate
-		cat <<EOF
-@PJL SET DOTCOUNT=1132782$e
-@PJL SET PAGESTATUS=END$e
-EOF
+                flush_page_footer
 	done
 
 	# Flushing PJL footer
-	cat <<EOF
-@PJL EOJ$e
-%-12345X
-EOF
-
+        flush_pjl_footer
 }
 
 [[ ! $DEBUG == "yes" ]] && rm -rf "$tmp_dir";
