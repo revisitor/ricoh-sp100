@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+# CUPS filter file
+# Author: madlynx (github.com/madlynx)
+# Last change: 17.01.2020 by mishta-real (github.com/mishta-real)
+
 # Debug mode: change to 'yes' to enable
 DEBUG=no
 
@@ -14,25 +18,30 @@ function logpipe() {
 function trapINT() {
     log "trapINT()"
     [ "x$trp" = "x" ] &&  trp="yes" || return
-    sleep 30 && { [ ! "${DEBUG}" = "yes" ] && rm -rf "$uid"; log "Cleanup complete"; } &
+    sleep 30 && { [ ! "${DEBUG}" = "yes" ] && rm -rf "$tmp_dir"; log "Cleanup complete"; } &
     exit
 }
 
 function stop() {
     log "Stop stop page";
-    echo "stop" > "$uid"/999999999-page.pbm
+    echo "stop" > "$tmp_dir"/999999999-page.pbm
 }
 
 log "Called with cmdline: $0 $*"
 
 trap "stop; trapINT" SIGINT SIGTERM SIGQUIT
-#trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT; 
+#trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT;
+
+# Job ID
+job_id="$1"
+
 # Username
 user="$2"
 
 # Page title (not used at this time, "Document" instead)
-ptitle="$3"
-my="$0"
+# ptitle="$3"
+
+# Options
 options="$5"
 
 pagesize="A4"
@@ -60,16 +69,17 @@ e=$(echo -en "\\r\\n")
 ddate="$(LC_ALL=en_US.UTF-8 date '+%Y/%m/%d %H:%M:%S')"
 
 # Temporary directory
-uid="/tmp/pstoricohddst-gdi-$(uuidgen)"
-mkdir -p "$uid"
-[ "${DEBUG}" = "yes" ] && exec >"$uid"/output.stream #> >(tee $uid/output.stream)
+tmp_dir="/tmp/pstoricohddst-gdi-$job_id"
+mkdir -p "$tmp_dir"
+
+[ "${DEBUG}" = "yes" ] && exec > "$tmp_dir"/output.stream #> >(tee $tmp_dir/output.stream)
 
 [ -x "$(which inotifywait)" ] && {
 	log "Asynchronous variant"
 
 	(
 	stage="empty"
-	inotifywait -q -m -r -e close_write --format '%f' "$uid" | grep --line-buffered 'page.pbm$' | while read -r page; do
+	inotifywait -q -m -r -e close_write --format '%f' "$tmp_dir" | grep --line-buffered 'page.pbm$' | while read -r page; do
 	    log "Page submitted"
 	    [ "$stage" = "empty" ] && {
 		log "1st stage. Flushing PJL header"
@@ -85,25 +95,25 @@ EOF
 
 		stage="printing"
 	    }
-	    [ "$page" = "999999999-page.pbm" ] && { 
+	    [ "$page" = "999999999-page.pbm" ] && {
 		log "Last stage. Flushing PJL footer"
 		cat <<EOF
 @PJL EOJ$e
 %-12345X
 EOF
-                pid=$(ps ax | grep "$uid" | grep -v grep | awk ' { print $1 } ')
+                pid=$(ps ax | grep "$tmp_dir" | grep -v grep | awk ' { print $1 } ')
 		[ ! "x$pid" = "x" ] && kill "$pid"
 		break
 	    }
 	    [ "$stage" = "printing" ] && {
 		# Converting page to JBIG format (parameters are very special for this printer!)
-		pbmtojbg -p 72 -o 3 -m 0 -q < "$uid"/"$page" > "$uid"/raster.jbig
+		pbmtojbg -p 72 -o 3 -m 0 -q < "$tmp_dir"/"$page" > "$tmp_dir"/raster.jbig
 
 		# Taking image size
-                jsize=$(wc -c < "$uid"/raster.jbig)
+                jsize=$(wc -c < "$tmp_dir"/raster.jbig)
 
 		# Taking image dimensions
-		read -r fn ft xs ys garb < <(identify "$uid"/"$page" | tr "x" " ")
+		read -r fn ft xs ys garb < <(identify "$tmp_dir"/"$page" | tr "x" " ")
 
 		# Flushing page header
 		cat <<EOF
@@ -119,7 +129,7 @@ EOF
 EOF
 
 		log "Flushing image $page"
-		cat "$uid"/raster.jbig
+		cat "$tmp_dir"/raster.jbig
 
 		# Flushing page footer
 		# TODO: pixelcount for toner estimate
@@ -132,7 +142,7 @@ EOF
 	) &
 
 	# Converting from PostScript to PostScript-monochrome, then to PBM image format (per page)
-	gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="${uid}"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
+	gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="${tmp_dir}"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
 
 	stop
 	wait
@@ -143,7 +153,7 @@ EOF
 
 	# Converting from PostScript to PostScript-monochrome, then to PBM image format (per page)
 	log "Converting document to pages"
-	gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="${uid}"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
+	gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="${tmp_dir}"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
 	log "Conversion complete"
 
 	cat <<EOF
@@ -156,14 +166,14 @@ EOF
 @PJL SET HOLD=OFF$e
 EOF
 
-	for page in ${uid}/*-page.pbm; do
+	for page in ${tmp_dir}/*-page.pbm; do
 
 		log "Page $page"
 		# Converting page to JBIG format (parameters are very special for this printer!)
-		pbmtojbg -p 72 -o 3 -m 0 -q < "$page" > "$uid"/raster.jbig
+		pbmtojbg -p 72 -o 3 -m 0 -q < "$page" > "$tmp_dir"/raster.jbig
 
 		# Taking image size
-                jsize=$(wc -c < "$uid"/raster.jbig)
+                jsize=$(wc -c < "$tmp_dir"/raster.jbig)
 
 		# Taking image dimensions
 		read -r fn ft xs ys garb < <(identify "$page" | tr "x" " ")
@@ -183,7 +193,7 @@ EOF
 EOF
 
 		# Flushing image
-		cat "$uid"/raster.jbig
+		cat "$tmp_dir"/raster.jbig
 
 		# Flushing page footer
 		# TODO: pixelcount for toner estimate
@@ -201,6 +211,6 @@ EOF
 
 }
 
-[[ ! $DEBUG == "yes" ]] && rm -rf "$uid";
+[[ ! $DEBUG == "yes" ]] && rm -rf "$tmp_dir";
 
 exit 0
