@@ -1,49 +1,48 @@
 First of all, you bought wrong printer :) This "driver" is not in
 production state. It was only an expirement.
 
-So, installation procedures:
+So, installation procedure:
 
-1) Open terminal, execute `check-requirements` script, you should see, that
-   all required components are correctly installed and available.
+1)  Open terminal, execute `check-requirements` script, you should see, that
+    all required components are correctly installed and available.
 
-2) Install unavailable components.
+2)  Install unavailable components.
 
-3) Copy `pstoricohddst-gdi` to cups' filters directory (usually
-   /usr/lib/cups/filter).
+3)  Copy `pstoricohddst-gdi` to cups' filters directory
+    (usually /usr/lib/cups/filter).
 
-4) Make sure it is executable by lp user and owned by root:root (i.e.
-   chown root:root pstoricohddst-gdi).
+4)  Make sure it is executable by lp user and owned by root:root
+    (i.e. chown root:root pstoricohddst-gdi).
 
-5) Add printer through CUPS' web interface (usually http://localhost:631/),
-   click 'Choose file' and select one of provided PPD-files
+5)  Add printer through CUPS' web interface (usually http://localhost:631/),
+    click 'Choose file' and select one of provided PPD-files
 
-6) Print!
-
+6)  Print!
 
 
 If you have troubles with printing:
 
- 1) Open terminal, execute `check-requirements` script, copy the output.
+1)  Open terminal, execute `check-requirements` script, copy the output.
 
- 2) Remove all /tmp/pstoricohddst-gdi* directories if found
+2)  Remove all /tmp/pstoricohddst-gdi* directories if found
 
- 3) Enable debug behavior by editing `/usr/lib/cups/filter/pstoricohddst-gdi`
+3)  Enable debug behavior by editing `/usr/lib/cups/filter/pstoricohddst-gdi`
     file (line 4).
 
- 4) Re-install printer in cups, make sure printing queue is clear.
+4)  Re-install printer in cups, make sure printing queue is clear.
 
- 5) Send test page.
+5)  Send test page.
 
- 6) Wait for 60 seconds
+6)  Wait for 60 seconds
 
- 7) In terminal, become root and execute (without pound):
-    # grep 'pstoricohddst-gdi' /var/log/*log
+7)  In terminal, execute as root:
+        grep 'pstoricohddst-gdi' /var/log/*log
     and
-    # ls -la /tmp/pstoricohddst-gdi*
+        ls -la /tmp/pstoricohddst-gdi*
 
- 8) Copy whole output of previous commands
+8)  Copy whole output of previous commands
 
- 9) Log in to Github (or register if you're unregistered)
+9)  Log in to Github (or register if you're unregistered)
 
 10) Open an issue (https://github.com/madlynx/ricoh-sp100/issues/new) with
     problem description, add output of steps 1) and 6)
