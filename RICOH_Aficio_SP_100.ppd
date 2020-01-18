@@ -2,7 +2,7 @@
 *%%%% PPD file for Ricoh Aficio SP 100 with CUPS.
 *%%%% Created by Serge V Shistarev from PPD built for Ricoh Aficio SP 100
 *%%%% Modified by mishta-real (github.com/mishta-real)
-*%%%% Last change: 17.01.2020
+*%%%% Last change: 18.01.2020
 *FormatVersion: "4.3"
 *FileVersion: "1.1"
 *LanguageVersion: English
@@ -10,9 +10,9 @@
 *PCFileName: "rsp100.ppd"
 *Product: "(SP 100)"
 *Manufacturer: "Ricoh"
-*ModelName: "Aficio SP 100"
-*ShortNickName: "Aficio SP 100"
-*NickName: "Ricoh Aficio SP 100"
+*ModelName: "Ricoh SP 100"
+*ShortNickName: "Ricoh SP 100"
+*NickName: "Ricoh Aficio SP 100 pstoricohddst-gdi"
 *PSVersion: "(3010.000) 0"
 *LanguageLevel: "3"
 *ColorDevice: False

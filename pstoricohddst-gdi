@@ -82,7 +82,8 @@ function print_page() {
     image_size=$(wc -c < "$tmp_dir"/raster.jbig)
 
     # Taking image dimensions
-    read -r width height < <(identify -format "%w %h" "$page")
+    width=$(identify -format "%w" "$tmp_dir"/"$page")
+    height=$(identify -format "%h" "$tmp_dir"/"$page")
     log "Identified as ${width}x${height}"
 
     # Flushing page header
@@ -106,16 +107,16 @@ readonly e=$(printf \\r\\n)  # <CR><LF> (EOL)
 
 print_date=$(date "+%Y/%m/%d %H:%M:%S") # Date of printing
 
-# Temporary directory
-tmp_dir="/tmp/pstoricohddst-gdi-$job_id"
-mkdir -p "$tmp_dir"
-
 # Command line parameters
 job_id=$1           # Job ID
 user=$2             # User started the job
 file_name=$3        # File to print
 copies_number=$4    # Number of copies to print
 options=$5          # Job parameters
+
+# Temporary directory
+tmp_dir="/tmp/pstoricohddst-gdi-$job_id"
+mkdir -p "$tmp_dir"
 
 pagesize="A4"
 resolution="600"
@@ -140,7 +141,7 @@ then
     log "Asynchronous variant"
     (
         stage="empty"
-        inotifywait -rmq -e close_write --format '%f' "$tmp_dir" | grep --line-buffered 'page.pbm$' | while read -r page
+        inotifywait -rmq -e close_write --format "%f" "$tmp_dir" | grep --line-buffered "page.pbm$" | while read -r page
         do
             log "Page submitted"
 
@@ -196,6 +197,6 @@ else
         flush_pjl_footer
 fi
 
-# [[ $DEBUG != "yes" ]] && rm -rf "$tmp_dir"
+[[ $DEBUG != "yes" ]] && rm -rf "$tmp_dir"
 
 exit 0
