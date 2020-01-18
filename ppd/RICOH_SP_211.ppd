@@ -2,6 +2,7 @@
 *%%%% PPD file for RICOH SP 211 with CUPS.
 *%%%% Created by the CUPS PPD Compiler CUPS v2.0.0.
 *% (C) Copyright 1994-2015 Primax Electronics Ltd. All Rights Reserved
+*%%%% Thanks to abhisekp (github.com/abhisekp) for adding this
 *FormatVersion: "4.3"
 *FileVersion: "0.01"
 *LanguageVersion: English
