@@ -1,0 +1,174 @@
+*PPD-Adobe: "4.3"
+*%%%% PPD file for RICOH SP 211 with CUPS.
+*%%%% Created by the CUPS PPD Compiler CUPS v2.0.0.
+*% (C) Copyright 1994-2015 Primax Electronics Ltd. All Rights Reserved
+*FormatVersion: "4.3"
+*FileVersion: "0.01"
+*LanguageVersion: English
+*LanguageEncoding: ISOLatin1
+*PCFileName: "RICOH-SP-211.ppd"
+*Product: "(RICOH SP 211)"
+*Manufacturer: "RICOH"
+*ModelName: "RICOH SP 211"
+*ShortNickName: "RICOH SP 211"
+*NickName: "RICOH SP 211, 0.01"
+*PSVersion: "(3010.000) 0"
+*LanguageLevel: "3"
+*ColorDevice: False
+*DefaultColorSpace: Gray
+*FileSystem: False
+*Throughput: "1"
+*LandscapeOrientation: Plus90
+*TTRasterizer: Type42
+
+*% Driver-defined attributes...
+*RequiresPageRegion All: True
+*cupsVersion: 2.0
+*cupsModelNumber: 0
+*cupsManualCopies: False
+*cupsFilter: "application/vnd.cups-raster 100 rastertolilo"
+*cupsLanguages: "en"
+
+*OpenUI *PageSize/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageSize
+*DefaultPageSize: A4
+*PageSize A4/A4 (210 x 297 mm): "<</PageSize[595 842]/ImagingBBox null>>setpagedevice"
+*PageSize B5/B5 JIS (182 x 257 mm): "<</PageSize[516 729]/ImagingBBox null>>setpagedevice"
+*PageSize A5/A5 (148 x 210 mm): "<</PageSize[420 595]/ImagingBBox null>>setpagedevice"
+*PageSize A6/A6 (105 x 148 mm): "<</PageSize[298 420]/ImagingBBox null>>setpagedevice"
+*PageSize B6/B6 JIS (128 x 182 mm): "<</PageSize[363 516]/ImagingBBox null>>setpagedevice"
+*PageSize Legal/Legal (8.5" x 14"): "<</PageSize[612 1008]/ImagingBBox null>>setpagedevice"
+*PageSize Letter/Letter (8.5" x 11"): "<</PageSize[612 792]/ImagingBBox null>>setpagedevice"
+*PageSize Executive/Executive (7.25" x 10.5"): "<</PageSize[522 756]/ImagingBBox null>>setpagedevice"
+*PageSize HalfLetter/5.5" x 8.5": "<</PageSize[396 612]/ImagingBBox null>>setpagedevice"
+*PageSize 16K/16K (184 x 260 mm): "<</PageSize[522 737]/ImagingBBox null>>setpagedevice"
+*PageSize 16K1/16K (195 x 270 mm): "<</PageSize[553 765]/ImagingBBox null>>setpagedevice"
+*PageSize 16K2/16K (197 x 273 mm): "<</PageSize[558 774]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageSize
+
+*OpenUI *PageRegion/Media Size: PickOne
+*OrderDependency: 10 AnySetup *PageRegion
+*DefaultPageRegion: A4
+*PageRegion A4/A4 (210 x 297 mm): "<</PageSize[595 842]/ImagingBBox null>>setpagedevice"
+*PageRegion B5/B5 JIS (182 x 257 mm): "<</PageSize[516 729]/ImagingBBox null>>setpagedevice"
+*PageRegion A5/A5 (148 x 210 mm): "<</PageSize[420 595]/ImagingBBox null>>setpagedevice"
+*PageRegion A6/A6 (105 x 148 mm): "<</PageSize[298 420]/ImagingBBox null>>setpagedevice"
+*PageRegion B6/B6 JIS (128 x 182 mm): "<</PageSize[363 516]/ImagingBBox null>>setpagedevice"
+*PageRegion Legal/Legal (8.5" x 14"): "<</PageSize[612 1008]/ImagingBBox null>>setpagedevice"
+*PageRegion Letter/Letter (8.5" x 11"): "<</PageSize[612 792]/ImagingBBox null>>setpagedevice"
+*PageRegion Executive/Executive (7.25" x 10.5"): "<</PageSize[522 756]/ImagingBBox null>>setpagedevice"
+*PageRegion HalfLetter/5.5" x 8.5": "<</PageSize[396 612]/ImagingBBox null>>setpagedevice"
+*PageRegion 16K/16K (184 x 260 mm): "<</PageSize[553 757]/ImagingBBox null>>setpagedevice"
+*PageRegion 16K1/16K (195 x 270 mm): "<</PageSize[553 757]/ImagingBBox null>>setpagedevice"
+*PageRegion 16K2/16K (197 x 273 mm): "<</PageSize[553 757]/ImagingBBox null>>setpagedevice"
+*CloseUI: *PageRegion
+
+*DefaultImageableArea: A4
+*ImageableArea A4/A4 (210 x 297 mm): "12 12 583 830"
+*ImageableArea B5/B5 JIS (182 x 257 mm): "12 12 504 717"
+*ImageableArea A5/A5 (148 x 210 mm): "12 12 408 583"
+*ImageableArea A6/A6 (105 x 148 mm): "12 12 286 408"
+*ImageableArea B6/B6 JIS (128 x 182 mm): "12 12 351 504"
+*ImageableArea Legal/Legal (8.5" x 14"): "12 12 600 996"
+*ImageableArea Letter/Letter (8.5" x 11"): "12 12 600 780"
+*ImageableArea Executive/Executive (7.25" x 10.5"): "12 12 510 744"
+*ImageableArea HalfLetter/5.5" x 8.5": "12 12 384 600"
+*ImageableArea 16K/16K (184 x 260 mm): "12 12 510 725"
+*ImageableArea 16K1/16K (195 x 270 mm): "12 12 541 753"
+*ImageableArea 16K2/16K (197 x 273 mm): "12 12 546 762"
+*DefaultPaperDimension: A4
+*PaperDimension A4/A4 (210 x 297 mm): "595 842"
+*PaperDimension B5/B5 JIS (182 x 257 mm): "516 729"
+*PaperDimension A5/A5 (148 x 210 mm): "420 595"
+*PaperDimension A6/A6 (105 x 148 mm): "298 420"
+*PaperDimension B6/B6 JIS (128 x 182 mm): "363 516"
+*PaperDimension Legal/Legal (8.5" x 14"): "612 1008"
+*PaperDimension Letter/Letter (8.5" x 11"): "612 792"
+*PaperDimension Executive/Executive (7.25" x 10.5"): "522 756"
+*PaperDimension HalfLetter/5.5" x 8.5": "396 612"
+*PaperDimension 16K/16K (184 x 260 mm): "522 737"
+*PaperDimension 16K1/16K (195 x 270 mm): "553 765"
+*PaperDimension 16K2/16K (197 x 273 mm): "558 774"
+*MaxMediaWidth: "612"
+*MaxMediaHeight: "1009.130004882812"
+*HWMargins: 12 12 12 12
+*CustomPageSize True: "pop pop pop <</PageSize[5 -2 roll]/ImagingBBox null>>setpagedevice"
+*ParamCustomPageSize Width: 1 points 255.110000610352 612
+*ParamCustomPageSize Height: 2 points 419.529998779297 1009.130004882812
+*ParamCustomPageSize WidthOffset: 3 points 0 0
+*ParamCustomPageSize HeightOffset: 4 points 0 0
+*ParamCustomPageSize Orientation: 5 int 0 0
+
+*OpenUI *Resolution/Resolution: PickOne
+*OrderDependency: 60 AnySetup *Resolution
+*DefaultResolution: 600dpi
+*Resolution 600dpi/600 dpi: "<</HWResolution[600 600]/cupsBitsPerColor 8/cupsRowCount 0/cupsRowFeed 0/cupsRowStep 0>>setpagedevice"
+*CloseUI: *Resolution
+
+*OpenUI *ColorModel/Print Quality: PickOne
+*OrderDependency: 70 AnySetup *ColorModel
+*DefaultColorModel: Gray
+*ColorModel Gray/Black and White: "<</cupsColorOrder 0/cupsColorSpace 3/cupsCompression 0>>setpagedevice"
+*CloseUI: *ColorModel
+
+*OpenUI *TonerSave/Toner Save: Boolean
+*OrderDependency: 120 AnySetup *TonerSave
+*DefaultTonerSave: False
+*TonerSave False/Off: "<</cupsInteger4 0>>setpagedevice"
+*TonerSave True/On: "<</cupsInteger4 1>>setpagedevice"
+*CloseUI: *TonerSave
+
+*OpenUI *InputSlot/Input Tray: PickOne
+*OrderDependency: 140 AnySetup *InputSlot
+*DefaultInputSlot: Tray1
+*InputSlot Manual/Bypass Tray: "<</ManualFeed true /TraySwitch false /MediaPosition 1>>setpagedevice"
+*InputSlot Tray1/Tray 1: "<</ManualFeed false /TraySwitch false /MediaPosition 2>>setpagedevice"
+*CloseUI: *InputSlot
+
+*OpenUI *MediaType/Paper Type: PickOne
+*OrderDependency: 150 AnySetup *MediaType
+*DefaultMediaType: PlainRecycled
+*MediaType PlainRecycled/Plain Paper & Recycled: "<</cupsMediaType 0 /MediaType(PlainRecycled)>>setpagedevice"
+*MediaType Thin/Thin Paper: "<</cupsMediaType 1 /MediaType (Thin)>>setpagedevice"
+*MediaType Plain1/Plain Paper: "<</cupsMediaType 2 /MediaType (Plain1)>>setpagedevice"
+*MediaType Recycled/Recycled Paper: "<</cupsMediaType 3 /MediaType (Recycled)>>setpagedevice"
+*MediaType Thick/Thick Paper 1: "<</cupsMediaType 4 /MediaType (Thick)>>setpagedevice"
+*CloseUI: *MediaType
+
+*DefaultFont: Courier
+*Font AvantGarde-Book: Standard "(1.05)" Standard ROM
+*Font AvantGarde-BookOblique: Standard "(1.05)" Standard ROM
+*Font AvantGarde-Demi: Standard "(1.05)" Standard ROM
+*Font AvantGarde-DemiOblique: Standard "(1.05)" Standard ROM
+*Font Bookman-Demi: Standard "(1.05)" Standard ROM
+*Font Bookman-DemiItalic: Standard "(1.05)" Standard ROM
+*Font Bookman-Light: Standard "(1.05)" Standard ROM
+*Font Bookman-LightItalic: Standard "(1.05)" Standard ROM
+*Font Courier: Standard "(1.05)" Standard ROM
+*Font Courier-Bold: Standard "(1.05)" Standard ROM
+*Font Courier-BoldOblique: Standard "(1.05)" Standard ROM
+*Font Courier-Oblique: Standard "(1.05)" Standard ROM
+*Font Helvetica: Standard "(1.05)" Standard ROM
+*Font Helvetica-Bold: Standard "(1.05)" Standard ROM
+*Font Helvetica-BoldOblique: Standard "(1.05)" Standard ROM
+*Font Helvetica-Narrow: Standard "(1.05)" Standard ROM
+*Font Helvetica-Narrow-Bold: Standard "(1.05)" Standard ROM
+*Font Helvetica-Narrow-BoldOblique: Standard "(1.05)" Standard ROM
+*Font Helvetica-Narrow-Oblique: Standard "(1.05)" Standard ROM
+*Font Helvetica-Oblique: Standard "(1.05)" Standard ROM
+*Font NewCenturySchlbk-Bold: Standard "(1.05)" Standard ROM
+*Font NewCenturySchlbk-BoldItalic: Standard "(1.05)" Standard ROM
+*Font NewCenturySchlbk-Italic: Standard "(1.05)" Standard ROM
+*Font NewCenturySchlbk-Roman: Standard "(1.05)" Standard ROM
+*Font Palatino-Bold: Standard "(1.05)" Standard ROM
+*Font Palatino-BoldItalic: Standard "(1.05)" Standard ROM
+*Font Palatino-Italic: Standard "(1.05)" Standard ROM
+*Font Palatino-Roman: Standard "(1.05)" Standard ROM
+*Font Symbol: Special "(001.005)" Special ROM
+*Font Times-Bold: Standard "(1.05)" Standard ROM
+*Font Times-BoldItalic: Standard "(1.05)" Standard ROM
+*Font Times-Italic: Standard "(1.05)" Standard ROM
+*Font Times-Roman: Standard "(1.05)" Standard ROM
+*Font ZapfChancery-MediumItalic: Standard "(1.05)" Standard ROM
+*Font ZapfDingbats: Special "(001.005)" Special ROM
+*% End of RICOH_SP_211.ppd, 08759 bytes.
