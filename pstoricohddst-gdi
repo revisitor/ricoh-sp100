@@ -4,9 +4,11 @@
 # Author: madlynx (github.com/madlynx)
 # Last change: 18.01.2020 by mishta-real (github.com/mishta-real)
 
+
 # Debug mode: change to 'yes' to enable
 # (SP 100 will not print)
 DEBUG=no
+
 
 # CONSTANTS
 # End-of-line for PJL (CRLF)
@@ -36,8 +38,10 @@ function logpipe() {
 
 function trapINT() {
   log "trapINT()"
-  [ "x$trp" = "x" ] &&  trp="yes" || return
-  sleep 30 && { [[ $DEBUG != "yes" ]] && rm -rf "$TMP_DIR"; log "Cleanup complete"; } &
+  [[ -z $trp ]] && trp="yes" || return
+  sleep 30 && {
+      [[ $DEBUG != "yes" ]] && rm -rf "$TMP_DIR"; log "Cleanup complete";
+  } &
   exit
 }
 
@@ -65,6 +69,14 @@ function flush_pjl_footer() {
 EOF
 }
 
+function kill_tmpdir_process() {
+  pid=$(pgrep "$TMP_DIR")
+
+  if [[ -n $pid ]]; then
+    kill "$pid"
+  fi
+}
+
 function flush_page_header() {
   cat <<EOF
 @PJL SET PAGESTATUS=START$EOL
@@ -81,7 +93,7 @@ EOF
 
 function flush_page_footer() {
   cat <<EOF
-@PJL SET DOTCOUNT=1132782$EOL
+@PJL SET DOTCOUNT=$dots$EOL
 @PJL SET PAGESTATUS=END$EOL
 EOF
 }
@@ -93,6 +105,7 @@ function flush_image() {
 
 function convert_to_pbmraw() {
   log "Converting document to pages"
+  # I wasn't able to print until I set -dNOSAFER for gs
   gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=ps2write -sOutputFile=- - \
     | gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=pbmraw -sOutputFile="$TMP_DIR"/%03d-page.pbm -
   log "Conversion complete"
@@ -106,10 +119,17 @@ function get_image_size() {
   image_size=$(wc -c < "$TMP_DIR"/raster.jbig)
 }
 
-function get_image_dimensions() {
+function get_image_parameters() {
   width=$(identify -format "%w" "$TMP_DIR"/"$page")
   height=$(identify -format "%h" "$TMP_DIR"/"$page")
+
   log "Identified as ${width}x${height}"
+
+  # Solution for hardcoded dots suggested by Fenisu (github.com/Fenisu)
+  # at github.com/madlynx/ricoh-sp100/issues/45
+  average_color=$(identify -format "%[fx:mean]" "$TMP_DIR"/"$page")
+  dots=$(echo "($width * $height * (1 - $average_color)) / 1" | bc)
+  dots=$(echo "$dots/100" | bc)
 }
 
 function print_page() {
@@ -121,7 +141,7 @@ function print_page() {
   get_image_size
 
   # Taking image dimensions
-  get_image_dimensions
+  get_image_parameters
 
   # Flushing page header
   flush_page_header
@@ -130,92 +150,98 @@ function print_page() {
   flush_image
 
   # Flushing page footer
-  # TODO: pixelcount for toner estimate
   flush_page_footer
 }
 
+function main() {
+  log "Called with cmdline: $0 $*"
 
-# ======== MAIN ========
-log "Called with cmdline: $0 $*"
+  trap "stop; trapINT" SIGINT SIGTERM SIGQUIT
+  # trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT
 
-trap "stop; trapINT" SIGINT SIGTERM SIGQUIT
-#trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT
+  pagesize="A4"
+  resolution="600"
+  mediasource="TRAY1"
 
-pagesize="A4"
-resolution="600"
-mediasource="TRAY1"
-
-for option in $OPTIONS; do
-  case "$option" in
-    PageSize=*)
-      pagesize=$(echo "${option#PageSize=}" | tr '[:lower:]' '[:upper:]')
-      ;;
-    InputSlot=*)
-      mediasource=${option#InputSlot=}
-      ;;
-  esac
-done
-
-if [[ $DEBUG = "yes" ]]; then
-  exec > "$TMP_DIR"/output.stream #> >(tee "$TMP_DIR"/output.stream)
-fi
-
-
-if [[ -x $(which inotifywait) ]]; then
-  log "Asynchronous variant"
-  (
-    stage="empty"
-    inotifywait -rmq -e close_write --format "%f" "$TMP_DIR" \
-      | grep --line-buffered "page.pbm$" \
-      | while read -r page; do
-          log "Page submitted"
-
-          if [[ $stage = "empty" ]]; then
-            log "1st stage. Flushing PJL header."
-            flush_pjl_header
-            stage="printing"
-          fi
-
-	  if [[ $page = "999999999-page.pbm" ]]; then
-	    log "Last stage. Flushing PJL footer."
-            flush_pjl_footer
-
-            pid=$(pgrep "$TMP_DIR")
-	    [[ -n $pid ]] && kill "$pid"
-	    break
-          fi
-
-	  if [[ $stage = "printing" ]]; then
-            print_page
-          fi
-        done
-  ) &
-  # Converting from PostScript to PostScript-monochrome,
-  # then to PBM image format (per page)
-  convert_to_pbmraw
-  stop
-  wait
-
-  trapINT
-else
-  log "Synchronous variant"
-
-  # Converting from PostScript to PostScript-monochrome,
-  # then to PBM image format (per page)
-  convert_to_pbmraw
-
-  # Flushing PJL header
-  flush_pjl_header
-
-  for page in "$TMP_DIR"/*-page.pbm; do
-    log "Page $page"
-    print_page
+  for option in $OPTIONS; do
+    case "$option" in
+      PageSize=*)
+        pagesize=$(echo "${option#PageSize=}" | tr '[:lower:]' '[:upper:]')
+        ;;
+      Resolution=*)
+        resolution=${option#Resolution=}
+        resolution=${resolution%dpi}
+        ;;
+      InputSlot=*)
+        mediasource=${option#InputSlot=}
+        ;;
+    esac
   done
 
-  # Flushing PJL footer
-  flush_pjl_footer
-fi
+  if [[ $DEBUG = "yes" ]]; then
+    exec > "$TMP_DIR"/output.stream #> >(tee "$TMP_DIR"/output.stream)
+  fi
 
-[[ $DEBUG != "yes" ]] && rm -rf "$TMP_DIR"
+  if [[ -x $(which inotifywait) ]]; then
+    log "Asynchronous variant"
+    (
+      stage="empty"
+      inotifywait -rmq -e close_write --format "%f" "$TMP_DIR" \
+        | grep --line-buffered "page.pbm$" \
+        | while read -r page; do
+            log "Page submitted"
 
-exit 0
+            if [[ $stage = "empty" ]]; then
+              log "1st stage. Flushing PJL header."
+              flush_pjl_header
+              stage="printing"
+            fi
+
+	    if [[ $page = "999999999-page.pbm" ]]; then
+	      log "Last stage. Flushing PJL footer."
+              flush_pjl_footer
+              kill_tmpdir_process
+	      break
+            fi
+
+	    if [[ $stage = "printing" ]]; then
+              print_page
+            fi
+          done
+    ) &
+    # Converting from PostScript to PostScript-monochrome, then to
+    # PBM image format (per page)
+    convert_to_pbmraw
+
+    stop
+    wait
+
+    trapINT
+  else
+    # NOTE: Synchronous doesn't work for me, my SP 100SU just freezes
+    log "Synchronous variant"
+
+    # Converting from PostScript to PostScript-monochrome, then to
+    # PBM image format (per page)
+    convert_to_pbmraw
+
+    # Flushing PJL header
+    flush_pjl_header
+
+    for page in "$TMP_DIR"/*-page.pbm; do
+      log "Page $page"
+      print_page
+    done
+
+    # Flushing PJL footer
+    flush_pjl_footer
+  fi
+
+  # Remove temp dir if not debugging
+  [[ $DEBUG != "yes" ]] && rm -rf "$TMP_DIR"
+
+  exit 0
+}
+
+main "$@"
+
