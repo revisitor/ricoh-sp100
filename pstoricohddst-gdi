@@ -2,10 +2,11 @@
 
 # CUPS filter file
 # Author: madlynx (github.com/madlynx)
-# Last change: 17.01.2020 by mishta-real (github.com/mishta-real)
+# Last change: 18.01.2020 by mishta-real (github.com/mishta-real)
 
 # Debug mode: change to 'yes' to enable
 DEBUG=no
+# SP100 won't print in Debug mode :)
 
 function log() {
     [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
@@ -53,10 +54,10 @@ function flush_page_header() {
 @PJL SET MEDIASOURCE=$mediasource$e
 @PJL SET MEDIATYPE=PLAINRECYCLE$e
 @PJL SET PAPER=$pagesize$e
-@PJL SET PAPERWIDTH=$xs$e
-@PJL SET PAPERLENGTH=$ys$e
-@PJL SET RESOLUTION=${resolution%x600}$e
-@PJL SET IMAGELEN=$jsize$e
+@PJL SET PAPERWIDTH=$width$e
+@PJL SET PAPERLENGTH=$height$e
+@PJL SET RESOLUTION=$resolution$e
+@PJL SET IMAGELEN=$image_size$e
 EOF
 }
 
@@ -67,10 +68,47 @@ function flush_page_footer() {
 EOF
 }
 
+function convert_to_pbmraw() {
+    log "Converting document to pages"
+    gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="$tmp_dir"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
+    log "Conversion complete"
+}
+
+function print_page() {
+    # Converting page to JBIG format (parameters are very special for this printer!)
+    pbmtojbg -p 72 -o 3 -m 0 -q < "$tmp_dir"/"$page" > "$tmp_dir"/raster.jbig
+
+    # Taking image size
+    image_size=$(wc -c < "$tmp_dir"/raster.jbig)
+
+    # Taking image dimensions
+    read -r width height < <(identify -format "%w %h" "$page")
+    log "Identified as ${width}x${height}"
+
+    # Flushing page header
+    flush_page_header
+
+    # Flushing image
+    log "Flushing image $page"
+    cat "$tmp_dir"/raster.jbig
+
+    # Flushing page footer
+    # TODO: pixelcount for toner estimate
+    flush_page_footer
+}
+
 log "Called with cmdline: $0 $*"
 
 trap "stop; trapINT" SIGINT SIGTERM SIGQUIT
 #trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT
+
+readonly e=$(printf \\r\\n)  # <CR><LF> (EOL)
+
+print_date=$(date "+%Y/%m/%d %H:%M:%S") # Date of printing
+
+# Temporary directory
+tmp_dir="/tmp/pstoricohddst-gdi-$job_id"
+mkdir -p "$tmp_dir"
 
 # Command line parameters
 job_id=$1           # Job ID
@@ -82,14 +120,11 @@ options=$5          # Job parameters
 pagesize="A4"
 resolution="600"
 mediasource="TRAY1"
+
 for opt in $options; do
     case "$opt" in
         PageSize=*)
             pagesize=$(echo "${opt#PageSize=}" | tr '[:lower:]' '[:upper:]')
-            ;;
-        Resolution=*)
-            resolution=${opt#Resolution=}
-            resolution=${resolution%dpi}
             ;;
         InputSlot=*)
             mediasource=${opt#InputSlot=}
@@ -97,106 +132,70 @@ for opt in $options; do
     esac
 done
 
-# MS-style EOL
-e=$(printf \\r\\n)
+[[ $DEBUG = "yes" ]] && exec > "$tmp_dir"/output.stream #> >(tee "$tmp_dir"/output.stream)
 
-# Printing date
-print_date=$(LC_ALL=en_US.UTF-8 date '+%Y/%m/%d %H:%M:%S')
 
-# Temporary directory
-tmp_dir="/tmp/pstoricohddst-gdi-$job_id"
-mkdir -p "$tmp_dir"
+if [[ -x $(which inotifywait) ]]
+then
+    log "Asynchronous variant"
+    (
+        stage="empty"
+        inotifywait -rmq -e close_write --format '%f' "$tmp_dir" | grep --line-buffered 'page.pbm$' | while read -r page
+        do
+            log "Page submitted"
 
-[ "${DEBUG}" = "yes" ] && exec > "$tmp_dir"/output.stream #> >(tee $tmp_dir/output.stream)
-
-[ -x "$(which inotifywait)" ] && {
-	log "Asynchronous variant"
-
-	(
-	stage="empty"
-	inotifywait -q -m -r -e close_write --format '%f' "$tmp_dir" | grep --line-buffered 'page.pbm$' | while read -r page ; do
-	    log "Page submitted"
-	    [ "$stage" = "empty" ] && {
-		log "1st stage. Flushing PJL header"
+            if [[ $stage = "empty" ]]
+            then
+                log "1st stage. Flushing PJL header."
                 flush_pjl_header
-		stage="printing"
-	    }
-	    [ "$page" = "999999999-page.pbm" ] && {
-		log "Last stage. Flushing PJL footer"
+                stage="printing"
+            fi
+
+	    if [[ $page = "999999999-page.pbm" ]]
+            then
+		log "Last stage. Flushing PJL footer."
                 flush_pjl_footer
 
-                pid=$(ps ax | grep "$tmp_dir" | grep -v grep | awk ' { print $1 } ')
-		[ ! "x$pid" = "x" ] && kill "$pid"
+                pid=$(pgrep "$tmp_dir")
+		[[ -n $pid ]] && kill "$pid"
 		break
-	    }
-	    [ "$stage" = "printing" ] && {
-		# Converting page to JBIG format (parameters are very special for this printer!)
-		pbmtojbg -p 72 -o 3 -m 0 -q < "$tmp_dir"/"$page" > "$tmp_dir"/raster.jbig
+            fi
 
-		# Taking image size
-                jsize=$(wc -c < "$tmp_dir"/raster.jbig)
-
-		# Taking image dimensions
-		read -r fn ft xs ys garb < <(identify "$tmp_dir"/"$page" | tr "x" " ")
-
-		# Flushing page header
-                flush_page_header
-		log "Flushing image $page"
-		cat "$tmp_dir"/raster.jbig
-
-		# Flushing page footer
-		# TODO: pixelcount for toner estimate
-                flush_page_footer
-	    }
+	    if [[ $stage = "printing" ]]
+            then
+                print_page
+            fi
 	done
 	) &
 
-	# Converting from PostScript to PostScript-monochrome, then to PBM image format (per page)
-	gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="${tmp_dir}"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
+        # Converting from PostScript to PostScript-monochrome,
+        # then to PBM image format (per page)
+        convert_to_pbmraw
 
 	stop
 	wait
 
 	trapINT
-} || {
+else
 	log "Synchronous variant"
 
-	# Converting from PostScript to PostScript-monochrome, then to PBM image format (per page)
-	log "Converting document to pages"
-	gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="${tmp_dir}"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
-	log "Conversion complete"
+        # Converting from PostScript to PostScript-monochrome,
+        #then to PBM image format (per page)
+        convert_to_pbmraw
 
         # Flushing PJL header
         flush_pjl_header
 
-	for page in ${tmp_dir}/*-page.pbm; do
-
-		log "Page $page"
-		# Converting page to JBIG format (parameters are very special for this printer!)
-		pbmtojbg -p 72 -o 3 -m 0 -q < "$page" > "$tmp_dir"/raster.jbig
-
-		# Taking image size
-                jsize=$(wc -c < "$tmp_dir"/raster.jbig)
-
-		# Taking image dimensions
-		read -r fn ft xs ys garb < <(identify "$page" | tr "x" " ")
-		log "Identified as ${xs}x${ys}"
-
-		# Flushing page header
-                flush_page_header
-
-		# Flushing image
-		cat "$tmp_dir"/raster.jbig
-
-		# Flushing page footer
-		# TODO: pixelcount for toner estimate
-                flush_page_footer
+	for page in "$tmp_dir"/*-page.pbm
+        do
+            log "Page $page"
+            print_page
 	done
 
 	# Flushing PJL footer
         flush_pjl_footer
-}
+fi
 
-[[ ! $DEBUG == "yes" ]] && rm -rf "$tmp_dir";
+# [[ $DEBUG != "yes" ]] && rm -rf "$tmp_dir"
 
 exit 0
