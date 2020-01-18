@@ -5,198 +5,217 @@
 # Last change: 18.01.2020 by mishta-real (github.com/mishta-real)
 
 # Debug mode: change to 'yes' to enable
+# (SP 100 will not print)
 DEBUG=no
-# SP100 won't print in Debug mode :)
+
+# CONSTANTS
+# End-of-line for PJL (CRLF)
+readonly EOL=$(printf \\r\\n)
+
+# Command line parameters
+readonly JOB_ID=$1          # Job ID
+readonly USER_NAME=$2       # User started the job
+readonly FILE_NAME=$3       # File to print
+readonly COPIES_NUMBER=$4   # Number of copies to print
+readonly OPTIONS=$5         # Job parameters
+
+# Temporary directory
+readonly TMP_DIR="/tmp/pstoricohddst-gdi-$JOB_ID"
+mkdir -p "$TMP_DIR"
+
+# Date of printing
+readonly PRINT_DATE=$(date "+%Y/%m/%d %H:%M:%S")
 
 function log() {
-    [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
+  [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
 }
 
 function logpipe() {
-    [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
+  [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
 }
 
 function trapINT() {
-    log "trapINT()"
-    [ "x$trp" = "x" ] &&  trp="yes" || return
-    sleep 30 && { [[ ! $DEBUG = "yes" ]] && rm -rf "$tmp_dir"; log "Cleanup complete"; } &
-    exit
+  log "trapINT()"
+  [ "x$trp" = "x" ] &&  trp="yes" || return
+  sleep 30 && { [[ $DEBUG != "yes" ]] && rm -rf "$TMP_DIR"; log "Cleanup complete"; } &
+  exit
 }
 
 function stop() {
-    log "Stop stop page";
-    echo "stop" > "$tmp_dir"/999999999-page.pbm
+  log "Stop stop page";
+  echo "stop" > "$TMP_DIR"/999999999-page.pbm
 }
 
 function flush_pjl_header() {
-    cat <<EOF
-%-12345X@PJL$e
-@PJL SET TIMESTAMP=$print_date$e
-@PJL SET FILENAME=$file_name$e
-@PJL SET COMPRESS=JBIG$e
-@PJL SET USERNAME=$user$e
-@PJL SET COVER=OFF$e
-@PJL SET HOLD=OFF$e
+  cat <<EOF
+%-12345X@PJL$EOL
+@PJL SET TIMESTAMP=$PRINT_DATE$EOL
+@PJL SET FILENAME=$FILE_NAME$EOL
+@PJL SET COMPRESS=JBIG$EOL
+@PJL SET USERNAME=$USER_NAME$EOL
+@PJL SET COVER=OFF$EOL
+@PJL SET HOLD=OFF$EOL
 EOF
 }
 
 function flush_pjl_footer() {
-    cat <<EOF
-@PJL EOJ$e
+  cat <<EOF
+@PJL EOJ$EOL
 %-12345X
 EOF
 }
 
 function flush_page_header() {
-    cat <<EOF
-@PJL SET PAGESTATUS=START$e
-@PJL SET COPIES=$copies_number$e
-@PJL SET MEDIASOURCE=$mediasource$e
-@PJL SET MEDIATYPE=PLAINRECYCLE$e
-@PJL SET PAPER=$pagesize$e
-@PJL SET PAPERWIDTH=$width$e
-@PJL SET PAPERLENGTH=$height$e
-@PJL SET RESOLUTION=$resolution$e
-@PJL SET IMAGELEN=$image_size$e
+  cat <<EOF
+@PJL SET PAGESTATUS=START$EOL
+@PJL SET COPIES=$COPIES_NUMBER$EOL
+@PJL SET MEDIASOURCE=$mediasource$EOL
+@PJL SET MEDIATYPE=PLAINRECYCLE$EOL
+@PJL SET PAPER=$pagesize$EOL
+@PJL SET PAPERWIDTH=$width$EOL
+@PJL SET PAPERLENGTH=$height$EOL
+@PJL SET RESOLUTION=$resolution$EOL
+@PJL SET IMAGELEN=$image_size$EOL
 EOF
 }
 
 function flush_page_footer() {
-    cat <<EOF
-@PJL SET DOTCOUNT=1132782$e
-@PJL SET PAGESTATUS=END$e
+  cat <<EOF
+@PJL SET DOTCOUNT=1132782$EOL
+@PJL SET PAGESTATUS=END$EOL
 EOF
 }
 
+function flush_image() {
+  log "Flushing image $page"
+  cat "$TMP_DIR"/raster.jbig
+}
+
 function convert_to_pbmraw() {
-    log "Converting document to pages"
-    gs -sDEVICE=ps2write -sOutputFile=- -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER - | gs -sDEVICE=pbmraw -sOutputFile="$tmp_dir"/%03d-page.pbm -r"$resolution" -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -
-    log "Conversion complete"
+  log "Converting document to pages"
+  gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=ps2write -sOutputFile=- - \
+    | gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=pbmraw -sOutputFile="$TMP_DIR"/%03d-page.pbm -
+  log "Conversion complete"
+}
+
+function convert_to_jbig() {
+  pbmtojbg -p 72 -o 3 -m 0 -q < "$TMP_DIR"/"$page" > "$TMP_DIR"/raster.jbig
+}
+
+function get_image_size() {
+  image_size=$(wc -c < "$TMP_DIR"/raster.jbig)
+}
+
+function get_image_dimensions() {
+  width=$(identify -format "%w" "$TMP_DIR"/"$page")
+  height=$(identify -format "%h" "$TMP_DIR"/"$page")
+  log "Identified as ${width}x${height}"
 }
 
 function print_page() {
-    # Converting page to JBIG format (parameters are very special for this printer!)
-    pbmtojbg -p 72 -o 3 -m 0 -q < "$tmp_dir"/"$page" > "$tmp_dir"/raster.jbig
+  # Converting page to JBIG format
+  # (parameters are very special for this printer!)
+  convert_to_jbig
 
-    # Taking image size
-    image_size=$(wc -c < "$tmp_dir"/raster.jbig)
+  # Taking image size
+  get_image_size
 
-    # Taking image dimensions
-    width=$(identify -format "%w" "$tmp_dir"/"$page")
-    height=$(identify -format "%h" "$tmp_dir"/"$page")
-    log "Identified as ${width}x${height}"
+  # Taking image dimensions
+  get_image_dimensions
 
-    # Flushing page header
-    flush_page_header
+  # Flushing page header
+  flush_page_header
 
-    # Flushing image
-    log "Flushing image $page"
-    cat "$tmp_dir"/raster.jbig
+  # Flushing image
+  flush_image
 
-    # Flushing page footer
-    # TODO: pixelcount for toner estimate
-    flush_page_footer
+  # Flushing page footer
+  # TODO: pixelcount for toner estimate
+  flush_page_footer
 }
 
+
+# ======== MAIN ========
 log "Called with cmdline: $0 $*"
 
 trap "stop; trapINT" SIGINT SIGTERM SIGQUIT
 #trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT
 
-readonly e=$(printf \\r\\n)  # <CR><LF> (EOL)
-
-print_date=$(date "+%Y/%m/%d %H:%M:%S") # Date of printing
-
-# Command line parameters
-job_id=$1           # Job ID
-user=$2             # User started the job
-file_name=$3        # File to print
-copies_number=$4    # Number of copies to print
-options=$5          # Job parameters
-
-# Temporary directory
-tmp_dir="/tmp/pstoricohddst-gdi-$job_id"
-mkdir -p "$tmp_dir"
-
 pagesize="A4"
 resolution="600"
 mediasource="TRAY1"
 
-for opt in $options; do
-    case "$opt" in
-        PageSize=*)
-            pagesize=$(echo "${opt#PageSize=}" | tr '[:lower:]' '[:upper:]')
-            ;;
-        InputSlot=*)
-            mediasource=${opt#InputSlot=}
-            ;;
-    esac
+for option in $OPTIONS; do
+  case "$option" in
+    PageSize=*)
+      pagesize=$(echo "${option#PageSize=}" | tr '[:lower:]' '[:upper:]')
+      ;;
+    InputSlot=*)
+      mediasource=${option#InputSlot=}
+      ;;
+  esac
 done
 
-[[ $DEBUG = "yes" ]] && exec > "$tmp_dir"/output.stream #> >(tee "$tmp_dir"/output.stream)
-
-
-if [[ -x $(which inotifywait) ]]
-then
-    log "Asynchronous variant"
-    (
-        stage="empty"
-        inotifywait -rmq -e close_write --format "%f" "$tmp_dir" | grep --line-buffered "page.pbm$" | while read -r page
-        do
-            log "Page submitted"
-
-            if [[ $stage = "empty" ]]
-            then
-                log "1st stage. Flushing PJL header."
-                flush_pjl_header
-                stage="printing"
-            fi
-
-	    if [[ $page = "999999999-page.pbm" ]]
-            then
-		log "Last stage. Flushing PJL footer."
-                flush_pjl_footer
-
-                pid=$(pgrep "$tmp_dir")
-		[[ -n $pid ]] && kill "$pid"
-		break
-            fi
-
-	    if [[ $stage = "printing" ]]
-            then
-                print_page
-            fi
-	done
-	) &
-
-        # Converting from PostScript to PostScript-monochrome,
-        # then to PBM image format (per page)
-        convert_to_pbmraw
-
-	stop
-	wait
-
-	trapINT
-else
-	log "Synchronous variant"
-
-        # Converting from PostScript to PostScript-monochrome,
-        #then to PBM image format (per page)
-        convert_to_pbmraw
-
-        # Flushing PJL header
-        flush_pjl_header
-
-	for page in "$tmp_dir"/*-page.pbm
-        do
-            log "Page $page"
-            print_page
-	done
-
-	# Flushing PJL footer
-        flush_pjl_footer
+if [[ $DEBUG = "yes" ]]; then
+  exec > "$TMP_DIR"/output.stream #> >(tee "$TMP_DIR"/output.stream)
 fi
 
-[[ $DEBUG != "yes" ]] && rm -rf "$tmp_dir"
+
+if [[ -x $(which inotifywait) ]]; then
+  log "Asynchronous variant"
+  (
+    stage="empty"
+    inotifywait -rmq -e close_write --format "%f" "$TMP_DIR" \
+      | grep --line-buffered "page.pbm$" \
+      | while read -r page; do
+          log "Page submitted"
+
+          if [[ $stage = "empty" ]]; then
+            log "1st stage. Flushing PJL header."
+            flush_pjl_header
+            stage="printing"
+          fi
+
+	  if [[ $page = "999999999-page.pbm" ]]; then
+	    log "Last stage. Flushing PJL footer."
+            flush_pjl_footer
+
+            pid=$(pgrep "$TMP_DIR")
+	    [[ -n $pid ]] && kill "$pid"
+	    break
+          fi
+
+	  if [[ $stage = "printing" ]]; then
+            print_page
+          fi
+        done
+  ) &
+  # Converting from PostScript to PostScript-monochrome,
+  # then to PBM image format (per page)
+  convert_to_pbmraw
+  stop
+  wait
+
+  trapINT
+else
+  log "Synchronous variant"
+
+  # Converting from PostScript to PostScript-monochrome,
+  # then to PBM image format (per page)
+  convert_to_pbmraw
+
+  # Flushing PJL header
+  flush_pjl_header
+
+  for page in "$TMP_DIR"/*-page.pbm; do
+    log "Page $page"
+    print_page
+  done
+
+  # Flushing PJL footer
+  flush_pjl_footer
+fi
+
+[[ $DEBUG != "yes" ]] && rm -rf "$TMP_DIR"
 
 exit 0

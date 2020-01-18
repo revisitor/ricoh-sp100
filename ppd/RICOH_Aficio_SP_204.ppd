@@ -1,17 +1,19 @@
 *PPD-Adobe: "4.3"
 *%%%% PPD file for Ricoh Aficio SP 204 with CUPS.
-*%%%%Created by James Bottomley from the SP 100 file
+*%%%% Created by James Bottomley from the SP 100 file
 *%%%% by Serge V Shistarev
+*%%%% Modified by mishta-real (github.com/mishta-real)
+*%%%% Last change: 18.01.2020
 *FormatVersion: "4.3"
 *FileVersion: "1.0"
 *LanguageVersion: English
 *LanguageEncoding: ISOLatin1
 *PCFileName: "rsp204.ppd"
-*Product: "(Ricoh Aficio SP 204)"
+*Product: "(SP 204)"
 *Manufacturer: "Ricoh"
-*ModelName: "Ricoh Aficio SP 1204"
+*ModelName: "Ricoh Aficio SP 204"
 *ShortNickName: "Ricoh Aficio SP 204"
-*NickName: "Ricoh Aficio SP 204, pstoricohddst-gdi 0.5 alpha"
+*NickName: "Ricoh Aficio SP 204 pstoricohddst-gdi"
 *PSVersion: "(3010.000) 0"
 *LanguageLevel: "3"
 *ColorDevice: False
@@ -20,6 +22,7 @@
 *Throughput: "1"
 *LandscapeOrientation: Plus90
 *TTRasterizer: Type42
+
 *% Driver-defined attributes...
 *1284DeviceID: "MFG:MFPrinter ;MDL:Laser Pro LL;CMD:AUTOMATIC,PJL,GDI_RL;DES:MFPrinter Laser Pro LL;CLS:PRINTER;VER:v1.03e ;NS:L507124L8090042;"
 *cupsVersion: 1.6
@@ -27,6 +30,7 @@
 *cupsManualCopies: False
 *cupsFilter: "application/vnd.cups-postscript 100 pstoricohddst-gdi"
 *cupsLanguages: "en"
+
 *OpenUI *PageSize/Media Size: PickOne
 *OrderDependency: 10 AnySetup *PageSize
 *DefaultPageSize: A4
@@ -39,6 +43,7 @@
 *PageSize B6/JIS B6: "<</PageSize[363 516]/ImagingBBox null>>setpagedevice"
 *PageSize Monarch/Envelope Monarch: "<</PageSize[279 540]/ImagingBBox null>>setpagedevice"
 *CloseUI: *PageSize
+
 *OpenUI *PageRegion/Media Size: PickOne
 *OrderDependency: 10 AnySetup *PageRegion
 *DefaultPageRegion: A4
@@ -51,6 +56,7 @@
 *PageRegion B6/JIS B6: "<</PageSize[363 516]/ImagingBBox null>>setpagedevice"
 *PageRegion Monarch/Envelope Monarch: "<</PageSize[279 540]/ImagingBBox null>>setpagedevice"
 *CloseUI: *PageRegion
+
 *DefaultImageableArea: A4
 *ImageableArea A4/A4: "12 12 583 830"
 *ImageableArea A5/A5: "12 12 408 583"
@@ -69,24 +75,28 @@
 *PaperDimension B5/JIS B5: "516 729"
 *PaperDimension B6/JIS B6: "363 516"
 *PaperDimension Monarch/Envelope Monarch: "279 540"
+
 *OpenUI *MediaType/Media Type: PickOne
 *OrderDependency: 10 AnySetup *MediaType
 *DefaultMediaType: Auto
 *MediaType Auto/Auto: "<</MediaType(Auto)/cupsMediaType 0>>setpagedevice"
 *MediaType Heavyweight/Heavyweight: "<</MediaType(Heavyweight)/cupsMediaType 3>>setpagedevice"
 *CloseUI: *MediaType
+
 *OpenUI *InputSlot/Media Source: PickOne
 *OrderDependency: 10 AnySetup *InputSlot
 *DefaultInputSlot: TRAY1
 *InputSlot MANUALFEED/Bypass Tray: "<</MediaPosition 0>>setpagedevice"
 *InputSlot TRAY1/Tray 1: "<</MediaPosition 1>>setpagedevice"
 *CloseUI: *InputSlot
+
 *OpenUI *Resolution/Resolution: PickOne
 *OrderDependency: 10 AnySetup *Resolution
 *DefaultResolution: 600dpi
 *Resolution 600dpi/600 DPI: "<</HWResolution[600 600]/cupsBitsPerColor 1/cupsRowCount 0/cupsRowFeed 0/cupsRowStep 0/cupsColorSpace 3>>setpagedevice"
 *Resolution 1200x600dpi/1200x600 DPI: "<</HWResolution[1200 600]/cupsBitsPerColor 1/cupsRowCount 0/cupsRowFeed 0/cupsRowStep 0/cupsColorSpace 3>>setpagedevice"
 *CloseUI: *Resolution
+
 *DefaultFont: Courier
 *Font AvantGarde-Book: Standard "(1.05)" Standard ROM
 *Font AvantGarde-BookOblique: Standard "(1.05)" Standard ROM
