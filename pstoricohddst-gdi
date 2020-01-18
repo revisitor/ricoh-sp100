@@ -8,17 +8,17 @@
 DEBUG=no
 
 function log() {
-    [ "${DEBUG}" = "yes" ] && echo "$@" | logger -t "$0[$$]"
+    [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
 }
 
 function logpipe() {
-    [ "${DEBUG}" = "yes" ] && echo "$@" | logger -t "$0[$$]"
+    [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
 }
 
 function trapINT() {
     log "trapINT()"
     [ "x$trp" = "x" ] &&  trp="yes" || return
-    sleep 30 && { [ ! "${DEBUG}" = "yes" ] && rm -rf "$tmp_dir"; log "Cleanup complete"; } &
+    sleep 30 && { [[ ! $DEBUG = "yes" ]] && rm -rf "$tmp_dir"; log "Cleanup complete"; } &
     exit
 }
 
@@ -30,7 +30,7 @@ function stop() {
 function flush_pjl_header() {
     cat <<EOF
 %-12345X@PJL$e
-@PJL SET TIMESTAMP=$ddate$e
+@PJL SET TIMESTAMP=$print_date$e
 @PJL SET FILENAME=$file_name$e
 @PJL SET COMPRESS=JBIG$e
 @PJL SET USERNAME=$user$e
@@ -70,13 +70,14 @@ EOF
 log "Called with cmdline: $0 $*"
 
 trap "stop; trapINT" SIGINT SIGTERM SIGQUIT
-#trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT;
+#trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT
 
-job_id="$1"          # Job ID
-user="$2"            # User started the job
-file_name="$3"       # File to print
-copies_number="$4"   # Number of copies to print
-options="$5"         # Job parameters
+# Command line parameters
+job_id=$1           # Job ID
+user=$2             # User started the job
+file_name=$3        # File to print
+copies_number=$4    # Number of copies to print
+options=$5          # Job parameters
 
 pagesize="A4"
 resolution="600"
@@ -84,7 +85,7 @@ mediasource="TRAY1"
 for opt in $options; do
     case "$opt" in
         PageSize=*)
-            pagesize="$(echo "${opt#PageSize=}" | tr a-z A-Z)"
+            pagesize=$(echo "${opt#PageSize=}" | tr '[:lower:]' '[:upper:]')
             ;;
         Resolution=*)
             resolution=${opt#Resolution=}
@@ -97,10 +98,10 @@ for opt in $options; do
 done
 
 # MS-style EOL
-e=$(echo -en "\\r\\n")
+e=$(printf \\r\\n)
 
 # Printing date
-ddate="$(LC_ALL=en_US.UTF-8 date '+%Y/%m/%d %H:%M:%S')"
+print_date=$(LC_ALL=en_US.UTF-8 date '+%Y/%m/%d %H:%M:%S')
 
 # Temporary directory
 tmp_dir="/tmp/pstoricohddst-gdi-$job_id"
@@ -113,7 +114,7 @@ mkdir -p "$tmp_dir"
 
 	(
 	stage="empty"
-	inotifywait -q -m -r -e close_write --format '%f' "$tmp_dir" | grep --line-buffered 'page.pbm$' | while read -r page; do
+	inotifywait -q -m -r -e close_write --format '%f' "$tmp_dir" | grep --line-buffered 'page.pbm$' | while read -r page ; do
 	    log "Page submitted"
 	    [ "$stage" = "empty" ] && {
 		log "1st stage. Flushing PJL header"

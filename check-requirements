@@ -1,9 +1,49 @@
 #!/usr/bin/env bash
 
-echo -n "pbmtojbg     [REQUIRED] : "; [[ -x $(which pbmtojbg) ]]            && echo "Yes, version: $(pbmtojbg --help 2>&1 | head -1)" || echo "No"
-echo -n "identify     [REQUIRED] : "; [[ -x $(which identify) ]]            && echo "Yes, version: $(identify -help | head -1)" || echo "No"
-echo -n "Ghostscript  [REQUIRED] : "; [[ -x $(which gs) ]]                  && echo "Yes, version: $(gs --version)" || echo "No"
-echo -n "ps2write     [REQUIRED] : "; [[ -n $(gs --help | grep ps2write) ]] && echo "Yes" || echo "No"
-echo -n "pbmraw       [REQUIRED] : "; [[ -n $(gs --help | grep pbmraw) ]]   && echo "Yes" || echo "No"
-echo -n "inotify-wait [optional] : "; [[ -x $(which inotifywait) ]]         && echo "Yes, version: $(inotifywait --help | head -1)" || echo "No"
+printf "pbmtojbg\\t[REQUIRED] : "
+if [[ -x $(which pbmtojbg) ]]
+then
+    echo "Yes, version $(pbmtojbg --help 2>&1 | head -1 | cut -d' ' -f3)."
+else
+    echo "No."
+fi
 
+printf "identify\\t[REQUIRED] : "
+if [[ -x $(which identify) ]]
+then
+    echo "Yes, version $(identify -help | head -1 | cut -d' ' -f3)."
+else
+        echo "No."
+fi
+
+printf "Ghostscript\\t[REQUIRED] : ";
+if [[ -x $(which gs) ]]
+then
+    echo "Yes, version $(gs --version)."
+else
+    echo "No."
+fi
+
+printf "ps2write\\t[REQUIRED] : ";
+if [[ -n $(gs --help | grep ps2write) ]]
+then
+    echo "Yes."
+else
+    echo "No."
+fi
+
+printf "pbmraw\\t\\t[REQUIRED] : ";
+if [[ -n $(gs --help | grep pbmraw) ]]
+then
+    echo "Yes."
+else
+    echo "No."
+fi
+
+printf "inotify-wait\\t[optional] : ";
+if [[ -x $(which inotifywait) ]]
+then
+    echo "Yes, version $(inotifywait --help | head -1 | cut -d' ' -f2)."
+else
+    echo "No."
+fi
