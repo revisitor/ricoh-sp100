@@ -4,3 +4,4 @@ bus_id=$(lsusb | grep Ricoh | cut -d" " -f2)
 dev_id=$(lsusb | grep Ricoh | cut -d" " -f4 | cut -c1-3)
 
 ./reset_usb "/dev/bus/usb/$bus_id/$dev_id"
+exit 0
