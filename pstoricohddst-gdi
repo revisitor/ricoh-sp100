@@ -5,8 +5,7 @@
 # Last change: 18.01.2020 by mishta-real (github.com/mishta-real)
 
 
-# Debug mode: change to 'yes' to enable
-# (SP 100 will not print)
+# Debug mode: change to 'yes' to enable (SP 100 will not print)
 DEBUG=no
 
 
@@ -32,17 +31,9 @@ function log() {
   [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
 }
 
-function logpipe() {
-  [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
-}
-
-function trapINT() {
-  log "trapINT()"
+function trap_int() {
+  log "trap_int()"
   [[ -z $trp ]] && trp="yes" || return
-  sleep 30 && {
-      [[ $DEBUG != "yes" ]] && rm -rf "$TMP_DIR"; log "Cleanup complete";
-  } &
-  exit
 }
 
 function stop() {
@@ -70,7 +61,7 @@ EOF
 }
 
 function kill_tmpdir_process() {
-  pid=$(pgrep "$TMP_DIR")
+  pid=$(pgrep -f "$TMP_DIR")
 
   if [[ -n $pid ]]; then
     kill "$pid"
@@ -129,7 +120,7 @@ function get_image_parameters() {
   # at github.com/madlynx/ricoh-sp100/issues/45
   average_color=$(identify -format "%[fx:mean]" "$TMP_DIR"/"$page")
   dots=$(echo "($width * $height * (1 - $average_color)) / 1" | bc)
-  dots=$(echo "$dots/100" | bc)
+  dots=$(echo "$dots / 100" | bc)
 }
 
 function print_page() {
@@ -153,11 +144,16 @@ function print_page() {
   flush_page_footer
 }
 
+function remove_temp_dir() {
+  rm -rf "$TMP_DIR"
+  log "Cleanup complete"
+}
+
 function main() {
   log "Called with cmdline: $0 $*"
 
-  trap "stop; trapINT" SIGINT SIGTERM SIGQUIT
-  # trap 'echo No' SIGINT SIGTERM SIGQUIT EXIT
+  trap "stop; trap_int" SIGINT SIGTERM SIGQUIT
+  # trap "echo No" SIGINT SIGTERM SIGQUIT EXIT
 
   pagesize="A4"
   resolution="600"
@@ -216,7 +212,7 @@ function main() {
     stop
     wait
 
-    trapINT
+    trap_int
   else
     # NOTE: Synchronous doesn't work for me, my SP 100SU just freezes
     log "Synchronous variant"
@@ -237,11 +233,11 @@ function main() {
     flush_pjl_footer
   fi
 
-  # Remove temp dir if not debugging
-  [[ $DEBUG != "yes" ]] && rm -rf "$TMP_DIR"
+  sleep 30
 
-  exit 0
+  # Remove temp dir if not debugging
+  [[ $DEBUG != "yes" ]] && remove_temp_dir
 }
 
 main "$@"
-
+exit 0
