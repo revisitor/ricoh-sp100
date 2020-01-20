@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
-# CUPS filter file
+# CUPS filter file for Ricoh DDST printers
 # Author: madlynx (github.com/madlynx)
-# Last change: 18.01.2020 by mishta-real (github.com/mishta-real)
+# Last change: 20.01.2020 by mishta-real (github.com/mishta-real)
 
 
-# Debug mode: change to 'yes' to enable (SP 100 will not print)
-DEBUG=no
+# Debug mode: change to "yes" to enable (SP 100 will not print)
+DEBUG="no"
 
 
 # CONSTANTS
@@ -28,7 +28,7 @@ mkdir -p "$TMP_DIR"
 readonly PRINT_DATE=$(date "+%Y/%m/%d %H:%M:%S")
 
 function log() {
-  [[ $DEBUG = "yes" ]] && echo "$@" | logger -t "$0[$$]"
+  [[ $DEBUG == "yes" ]] && echo "$@" | logger -t "$0[$$]"
 }
 
 function trap_int() {
@@ -37,11 +37,13 @@ function trap_int() {
 }
 
 function stop() {
-  log "Stop stop page";
+  log "Stop stop page"
   echo "stop" > "$TMP_DIR"/999999999-page.pbm
 }
 
 function flush_pjl_header() {
+  log "Flushing PJL header ..."
+
   cat <<EOF
 %-12345X@PJL$EOL
 @PJL SET TIMESTAMP=$PRINT_DATE$EOL
@@ -51,24 +53,34 @@ function flush_pjl_header() {
 @PJL SET COVER=OFF$EOL
 @PJL SET HOLD=OFF$EOL
 EOF
+
+  log "Flushed PJL header."
 }
 
 function flush_pjl_footer() {
+  log "Flushing PJL footer ..."
+
   cat <<EOF
 @PJL EOJ$EOL
 %-12345X
 EOF
+
+  log "Flushed PJL footer."
 }
 
 function kill_tmpdir_process() {
   pid=$(pgrep -f "$TMP_DIR")
 
   if [[ -n $pid ]]; then
+    log "Killing process $pid ..."
     kill "$pid"
+    log "Killed process $pid."
   fi
 }
 
 function flush_page_header() {
+  log "Flushing page header ..."
+
   cat <<EOF
 @PJL SET PAGESTATUS=START$EOL
 @PJL SET COPIES=$COPIES_NUMBER$EOL
@@ -80,58 +92,84 @@ function flush_page_header() {
 @PJL SET RESOLUTION=$resolution$EOL
 @PJL SET IMAGELEN=$image_size$EOL
 EOF
+
+  log "Flushed page header."
 }
 
 function flush_page_footer() {
+  log "Flushing page footer ..."
+
   cat <<EOF
 @PJL SET DOTCOUNT=$dots$EOL
 @PJL SET PAGESTATUS=END$EOL
 EOF
+
+  log "Flushed page footer."
 }
 
 function flush_image() {
-  log "Flushing image $page"
+  log "Flushing image $page ..."
+
   cat "$TMP_DIR"/raster.jbig
+
+  log "Flushed image $page."
 }
 
 function convert_to_pbmraw() {
-  log "Converting document to pages"
-  # I wasn't able to print until I set -dNOSAFER for gs
+  log "Converting document to pages ..."
+
+  # Converting from PostScript to PS-monochrome, then to PBM per page.
+  # I wasn't able to print until I set -dNOSAFER for gs.
   gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=ps2write -sOutputFile=- - \
     | gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=pbmraw -sOutputFile="$TMP_DIR"/%03d-page.pbm -
-  log "Conversion complete"
+
+  log "Conversion to pages complete."
 }
 
 function convert_to_jbig() {
+  log "Converting to JBIG ..."
+
   pbmtojbg -p 72 -o 3 -m 0 -q < "$TMP_DIR"/"$page" > "$TMP_DIR"/raster.jbig
+
+  log "Conversion to JBIG complete."
 }
 
 function get_image_size() {
+  log "Getting image size ..."
+
   image_size=$(wc -c < "$TMP_DIR"/raster.jbig)
+
+  log "The size is $image_size"
 }
 
 function get_image_parameters() {
+  log "Getting image parameters ..."
+
   width=$(identify -format "%w" "$TMP_DIR"/"$page")
   height=$(identify -format "%h" "$TMP_DIR"/"$page")
-
-  log "Identified as ${width}x${height}"
 
   # Solution for hardcoded dots suggested by Fenisu (github.com/Fenisu)
   # at github.com/madlynx/ricoh-sp100/issues/45
   average_color=$(identify -format "%[fx:mean]" "$TMP_DIR"/"$page")
   dots=$(echo "($width * $height * (1 - $average_color)) / 1" | bc)
   dots=$(echo "$dots / 100" | bc)
+
+  log "Width: $width"
+  log "Height: $height"
+  log "Dots: $dots"
 }
 
 function print_page() {
-  # Converting page to JBIG format
-  # (parameters are very special for this printer!)
+  log "Processing page $page ..."
+
+  # Converting page to JBIG format (parameters are very special
+  # for this printer!)
   convert_to_jbig
 
   # Taking image size
   get_image_size
 
-  # Taking image dimensions
+  # Taking image parameters
   get_image_parameters
 
   # Flushing page header
@@ -142,15 +180,20 @@ function print_page() {
 
   # Flushing page footer
   flush_page_footer
+
+  log "Done page $page."
 }
 
 function remove_temp_dir() {
+  log "Removing $TMP_DIR ..."
+
   rm -rf "$TMP_DIR"
-  log "Cleanup complete"
+
+  log "Removed $TMP_DIR."
 }
 
 function main() {
-  log "Called with cmdline: $0 $*"
+  log "Called with command line: $0 $*"
 
   trap "stop; trap_int" SIGINT SIGTERM SIGQUIT
   # trap "echo No" SIGINT SIGTERM SIGQUIT EXIT
@@ -174,58 +217,57 @@ function main() {
     esac
   done
 
-  if [[ $DEBUG = "yes" ]]; then
+  if [[ $DEBUG == "yes" ]]; then
     exec > "$TMP_DIR"/output.stream #> >(tee "$TMP_DIR"/output.stream)
   fi
 
   if [[ -x $(which inotifywait) ]]; then
-    log "Asynchronous variant"
+    log "Asynchronous variant."
     (
       stage="empty"
-      inotifywait -rmq -e close_write --format "%f" "$TMP_DIR" \
+
+      inotifywait -rmqe close_write --format "%f" "$TMP_DIR" \
         | grep --line-buffered "page.pbm$" \
         | while read -r page; do
             log "Page submitted"
 
-            if [[ $stage = "empty" ]]; then
-              log "1st stage. Flushing PJL header."
+            if [[ $stage == "empty" ]]; then
               flush_pjl_header
               stage="printing"
             fi
 
-	    if [[ $page = "999999999-page.pbm" ]]; then
-	      log "Last stage. Flushing PJL footer."
+	    if [[ $page == "999999999-page.pbm" ]]; then
               flush_pjl_footer
               kill_tmpdir_process
 	      break
             fi
 
-	    if [[ $stage = "printing" ]]; then
+	    if [[ $stage == "printing" ]]; then
               print_page
             fi
           done
     ) &
-    # Converting from PostScript to PostScript-monochrome, then to
-    # PBM image format (per page)
     convert_to_pbmraw
 
     stop
     wait
 
     trap_int
-  else
-    # NOTE: Synchronous doesn't work for me, my SP 100SU just freezes
-    log "Synchronous variant"
 
-    # Converting from PostScript to PostScript-monochrome, then to
-    # PBM image format (per page)
+  # end of if [[ -x $(which inotifywait) ]]
+  else
+    # TODO: fix synchronous variant
+
+    log "Synchronous variant."
+
+    # Converting from PostScript to PS-monochrome, then to PBM per page.
     convert_to_pbmraw
 
     # Flushing PJL header
     flush_pjl_header
 
-    for page in "$TMP_DIR"/*-page.pbm; do
-      log "Page $page"
+    # Printing pages
+    find -- *-page.pbm | while read -r page; do
       print_page
     done
 
@@ -240,4 +282,4 @@ function main() {
 }
 
 main "$@"
-exit 0
+exit
