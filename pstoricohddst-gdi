@@ -22,18 +22,14 @@ readonly OPTIONS=$5         # Job parameters
 
 # Temporary directory
 readonly TMP_DIR="/tmp/pstoricohddst-gdi-$JOB_ID"
-mkdir -p "$TMP_DIR"
 
 # Date of printing
 readonly PRINT_DATE=$(date "+%Y/%m/%d %H:%M:%S")
 
 function log() {
-  [[ $DEBUG == "yes" ]] && echo "$@" | logger -t "$0[$$]"
-}
-
-function trap_int() {
-  log "trap_int()"
-  [[ -z $trp ]] && trp="yes" || return
+  if [[ $DEBUG == "yes" ]]; then
+    echo "$@" | logger -t "$0[$$]"
+  fi
 }
 
 function stop() {
@@ -123,7 +119,7 @@ function convert_to_pbmraw() {
   gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=ps2write -sOutputFile=- - \
     | gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=pbmraw -sOutputFile="$TMP_DIR"/%03d-page.pbm -
 
-  log "Conversion to pages complete."
+  log "Conversion to pages is complete."
 }
 
 function convert_to_jbig() {
@@ -131,7 +127,7 @@ function convert_to_jbig() {
 
   pbmtojbg -p 72 -o 3 -m 0 -q < "$TMP_DIR"/"$page" > "$TMP_DIR"/raster.jbig
 
-  log "Conversion to JBIG complete."
+  log "Conversion to JBIG is complete."
 }
 
 function get_image_size() {
@@ -166,25 +162,20 @@ function print_page() {
   # for this printer!)
   convert_to_jbig
 
-  # Taking image size
   get_image_size
 
-  # Taking image parameters
   get_image_parameters
 
-  # Flushing page header
   flush_page_header
 
-  # Flushing image
   flush_image
 
-  # Flushing page footer
   flush_page_footer
 
   log "Done page $page."
 }
 
-function remove_temp_dir() {
+function remove_tmp_dir() {
   log "Removing $TMP_DIR ..."
 
   rm -rf "$TMP_DIR"
@@ -195,8 +186,9 @@ function remove_temp_dir() {
 function main() {
   log "Called with command line: $0 $*"
 
-  trap "stop; trap_int" SIGINT SIGTERM SIGQUIT
-  # trap "echo No" SIGINT SIGTERM SIGQUIT EXIT
+  trap "stop; remove_tmp_dir; exit;" SIGINT SIGTERM SIGQUIT
+
+  mkdir -p "$TMP_DIR"
 
   pagesize="A4"
   resolution="600"
@@ -218,7 +210,7 @@ function main() {
   done
 
   if [[ $DEBUG == "yes" ]]; then
-    exec > "$TMP_DIR"/output.stream #> >(tee "$TMP_DIR"/output.stream)
+    exec > "$TMP_DIR"/output.stream
   fi
 
   if [[ -x $(which inotifywait) ]]; then
@@ -229,7 +221,7 @@ function main() {
       inotifywait -rmqe close_write --format "%f" "$TMP_DIR" \
         | grep --line-buffered "page.pbm$" \
         | while read -r page; do
-            log "Page submitted"
+            log "Page submitted."
 
             if [[ $stage == "empty" ]]; then
               flush_pjl_header
@@ -254,7 +246,6 @@ function main() {
 
     trap_int
 
-  # end of if [[ -x $(which inotifywait) ]]
   else
     # TODO: fix synchronous variant
 
@@ -263,23 +254,22 @@ function main() {
     # Converting from PostScript to PS-monochrome, then to PBM per page.
     convert_to_pbmraw
 
-    # Flushing PJL header
     flush_pjl_header
 
-    # Printing pages
-    find -- *-page.pbm | while read -r page; do
+    find "$TMP_DIR" -name "*-page.pbm" -printf "%f\n" | while read -r page; do
       print_page
     done
 
-    # Flushing PJL footer
     flush_pjl_footer
   fi
 
   sleep 30
 
-  # Remove temp dir if not debugging
-  [[ $DEBUG != "yes" ]] && remove_temp_dir
+  if [[ $DEBUG != "yes" ]]; then
+    remove_tmp_dir
+  fi
+
+  exit 0
 }
 
 main "$@"
-exit
