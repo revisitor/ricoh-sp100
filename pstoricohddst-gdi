@@ -2,7 +2,7 @@
 
 # CUPS filter file for Ricoh DDST printers
 # Author: madlynx (github.com/madlynx)
-# Last change: 20.01.2020 by mishta-real (github.com/mishta-real)
+# Last change: 24.01.2020 by mishta-real (github.com/mishta-real)
 
 
 # Debug mode: change to "yes" to enable (SP 100 will not print)
@@ -115,7 +115,6 @@ function convert_to_pbmraw() {
   log "Converting document to pages ..."
 
   # Converting from PostScript to PS-monochrome, then to PBM per page.
-  # I wasn't able to print until I set -dNOSAFER for gs.
   gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=ps2write -sOutputFile=- - \
     | gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=pbmraw -sOutputFile="$TMP_DIR"/%03d-page.pbm -
 
@@ -125,6 +124,8 @@ function convert_to_pbmraw() {
 function convert_to_jbig() {
   log "Converting to JBIG ..."
 
+  # Converting page to JBIG format
+  # (parameters are very special for this printer!)
   pbmtojbg -p 72 -o 3 -m 0 -q < "$TMP_DIR"/"$page" > "$TMP_DIR"/raster.jbig
 
   log "Conversion to JBIG is complete."
@@ -158,12 +159,9 @@ function get_image_parameters() {
 function print_page() {
   log "Processing page $page ..."
 
-  # Converting page to JBIG format (parameters are very special
-  # for this printer!)
   convert_to_jbig
 
   get_image_size
-
   get_image_parameters
 
   flush_page_header
@@ -240,34 +238,26 @@ function main() {
           done
     ) &
     convert_to_pbmraw
-
     stop
     wait
 
-    trap_int
-
   else
-    # TODO: fix synchronous variant
-
     log "Synchronous variant."
 
-    # Converting from PostScript to PS-monochrome, then to PBM per page.
     convert_to_pbmraw
 
     flush_pjl_header
 
-    find "$TMP_DIR" -name "*-page.pbm" -printf "%f\n" | while read -r page; do
-      print_page
-    done
+    find "$TMP_DIR" -name "*-page.pbm" -printf "%f\\n" \
+      | while read -r page; do
+          print_page
+        done
 
     flush_pjl_footer
   fi
 
   sleep 30
-
-  if [[ $DEBUG != "yes" ]]; then
-    remove_tmp_dir
-  fi
+  [[ $DEBUG != "yes" ]] && remove_tmp_dir
 
   exit 0
 }
