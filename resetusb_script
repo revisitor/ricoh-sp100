@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
-# This script finds automatically bus and device numbers
-# and runs the executable. When complete, the executable is removed.
+# This script automatically finds bus and device IDs
+# and launches the executable. When complete, the executable is removed.
 
-# Run it (with sudo) if your printer doesn't print after first job.
+# Run the script with sudo if your printer does not print after first job.
 
 bus_id=$(lsusb | grep Ricoh | cut -d" " -f2)
 dev_id=$(lsusb | grep Ricoh | cut -d" " -f4 | cut -c1-3)
@@ -15,4 +15,4 @@ cc reset_usb.c -o "$exec_name"
 
 rm -f "$exec_name"
 
-exit
+exit 0

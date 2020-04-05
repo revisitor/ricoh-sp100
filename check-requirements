@@ -1,21 +1,21 @@
 #!/usr/bin/env bash
 
 printf "pbmtojbg\\t[REQUIRED] : "
-if [[ -x $(which pbmtojbg) ]]; then
+if [[ -x $(command -v pbmtojbg) ]]; then
   echo "Yes, version: $(pbmtojbg --help 2>&1 | head -1 | cut -d" " -f3)."
 else
   echo "No."
 fi
 
 printf "identify\\t[REQUIRED] : "
-if [[ -x $(which identify) ]]; then
+if [[ -x $(command -v identify) ]]; then
   echo "Yes, version: $(identify -help | head -1 | cut -d" " -f3)."
 else
   echo "No."
 fi
 
 printf "Ghostscript\\t[REQUIRED] : "
-if [[ -x $(which gs) ]]; then
+if [[ -x $(command -v gs) ]]; then
   echo "Yes, version: $(gs --version)."
 else
   echo "No."
@@ -36,7 +36,7 @@ else
 fi
 
 printf "inotify-wait\\t[optional] : "
-if [[ -x $(which inotifywait) ]]; then
+if [[ -x $(command -v inotifywait) ]]; then
   echo "Yes, version: $(inotifywait --help | head -1 | cut -d" " -f2)."
 else
   echo "No."
