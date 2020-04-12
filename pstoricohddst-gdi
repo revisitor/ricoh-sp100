@@ -2,7 +2,7 @@
 
 # CUPS filter file for Ricoh DDST printers
 # Author: madlynx (github.com/madlynx)
-# Last change: 24.01.2020 by mishta-real (github.com/mishta-real)
+# Last change: 12.04.2020 by mishta-real (github.com/mishta-real)
 
 
 # Debug mode: change to "yes" to enable (SP 100 will not print)
@@ -30,12 +30,12 @@ function log() {
   if [[ $DEBUG == "yes" ]]; then
     echo "$@" | logger -t "$0[$$]"
   fi
-}
+} # function log()
 
 function stop() {
   log "Stop stop page"
   echo "stop" > "$TMP_DIR"/999999999-page.pbm
-}
+} # function stop()
 
 function flush_pjl_header() {
   log "Flushing PJL header ..."
@@ -51,7 +51,7 @@ function flush_pjl_header() {
 EOF
 
   log "Flushed PJL header."
-}
+} # function flush_pjl_header()
 
 function flush_pjl_footer() {
   log "Flushing PJL footer ..."
@@ -62,7 +62,7 @@ function flush_pjl_footer() {
 EOF
 
   log "Flushed PJL footer."
-}
+} # function flush_pjl_footer()
 
 function kill_tmpdir_process() {
   pid=$(pgrep -f "$TMP_DIR")
@@ -72,7 +72,7 @@ function kill_tmpdir_process() {
     kill "$pid"
     log "Killed process $pid."
   fi
-}
+} # function kill_tmpdir_process()
 
 function flush_page_header() {
   log "Flushing page header ..."
@@ -90,7 +90,7 @@ function flush_page_header() {
 EOF
 
   log "Flushed page header."
-}
+} # function flush_page_header()
 
 function flush_page_footer() {
   log "Flushing page footer ..."
@@ -101,7 +101,7 @@ function flush_page_footer() {
 EOF
 
   log "Flushed page footer."
-}
+} # function flush_page_footer()
 
 function flush_image() {
   log "Flushing image $page ..."
@@ -109,7 +109,7 @@ function flush_image() {
   cat "$TMP_DIR"/raster.jbig
 
   log "Flushed image $page."
-}
+} # function flush_image()
 
 function convert_to_pbmraw() {
   log "Converting document to pages ..."
@@ -119,7 +119,7 @@ function convert_to_pbmraw() {
     | gs -dQUIET -dBATCH -dNOPAUSE -dNOSAFER -r"$resolution" -sDEVICE=pbmraw -sOutputFile="$TMP_DIR"/%03d-page.pbm -
 
   log "Conversion to pages is complete."
-}
+} # function convert_to_pbmraw()
 
 function convert_to_jbig() {
   log "Converting to JBIG ..."
@@ -129,7 +129,7 @@ function convert_to_jbig() {
   pbmtojbg -p 72 -o 3 -m 0 -q < "$TMP_DIR"/"$page" > "$TMP_DIR"/raster.jbig
 
   log "Conversion to JBIG is complete."
-}
+} # function convert_to_jbig()
 
 function get_image_size() {
   log "Getting image size ..."
@@ -137,7 +137,7 @@ function get_image_size() {
   image_size=$(wc -c < "$TMP_DIR"/raster.jbig)
 
   log "The size is $image_size"
-}
+} # function get_image_size()
 
 function get_image_parameters() {
   log "Getting image parameters ..."
@@ -154,7 +154,7 @@ function get_image_parameters() {
   log "Width: $width"
   log "Height: $height"
   log "Dots: $dots"
-}
+} # function get_image_parameters()
 
 function print_page() {
   log "Processing page $page ..."
@@ -171,7 +171,7 @@ function print_page() {
   flush_page_footer
 
   log "Done page $page."
-}
+} # function print_page()
 
 function remove_tmp_dir() {
   log "Removing $TMP_DIR ..."
@@ -179,12 +179,12 @@ function remove_tmp_dir() {
   rm -rf "$TMP_DIR"
 
   log "Removed $TMP_DIR."
-}
+} # function remove_tmp_dir()
 
 function main() {
   log "Called with command line: $0 $*"
 
-  trap "stop; remove_tmp_dir; exit;" SIGINT SIGTERM SIGQUIT
+  trap "stop && remove_tmp_dir && exit;" SIGINT SIGTERM SIGQUIT
 
   mkdir -p "$TMP_DIR"
 
@@ -192,6 +192,7 @@ function main() {
   resolution="600"
   mediasource="TRAY1"
 
+  # Parsing options from input
   for option in $OPTIONS; do
     case "$option" in
       PageSize=*)
@@ -204,8 +205,8 @@ function main() {
       InputSlot=*)
         mediasource=${option#InputSlot=}
         ;;
-    esac
-  done
+    esac # case "$option" in
+  done # for option in $OPTIONS; do
 
   if [[ $DEBUG == "yes" ]]; then
     exec > "$TMP_DIR"/output.stream
@@ -235,13 +236,13 @@ function main() {
 	    if [[ $stage == "printing" ]]; then
               print_page
             fi
-          done
+          done # while read -r page; do
     ) &
     convert_to_pbmraw
     stop
     wait
 
-  else
+  else # end of if [[ -x $(which inotifywait) ]]; then
     log "Synchronous variant."
 
     convert_to_pbmraw
@@ -254,12 +255,12 @@ function main() {
         done
 
     flush_pjl_footer
-  fi
+  fi # end of else
 
   sleep 30
   [[ $DEBUG != "yes" ]] && remove_tmp_dir
 
   exit 0
-}
+} # function main()
 
 main "$@"

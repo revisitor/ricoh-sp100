@@ -15,32 +15,42 @@
 #include <sys/ioctl.h>
 #include <linux/usbdevice_fs.h>
 
-int main(int argc, char **argv)
+int main( int argc, char **argv )
 {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: usbreset /dev/bus/usb/<bus-number>/<device-number>\n");
+    if ( argc != 2 ) {
+        fprintf(
+            stderr,
+            "Usage: usbreset /dev/bus/usb/<bus-number>/<device-number>\n"
+        );
         return 1;
     }
 
-    const char *filename = argv[1];
+    const char *filename = argv[ 1 ];
 
-    int fd = open(filename, O_WRONLY);
-    if (fd < 0) {
-        perror("Error opening output file.");
+    int fd = open(
+        filename,
+        O_WRONLY
+    );
+    if ( fd < 0 ) {
+        perror( "Error opening output file." );
         return 1;
     }
 
-    printf("Resetting USB device %s ...\n", filename);
+    printf( "Resetting USB device %s ...\n", filename );
 
-    int rc = ioctl(fd, USBDEVFS_RESET, 0);
-    if (rc < 0) {
-        perror("Error in ioctl.");
+    int rc = ioctl(
+        fd,
+        USBDEVFS_RESET,
+        0
+    );
+    if ( rc < 0 ) {
+        perror( "Error in ioctl." );
         return 1;
     }
 
-    printf("Reset successful.\n");
+    printf( "Reset successful.\n" );
 
-    close(fd);
+    close( fd );
 
     return 0;
 }
