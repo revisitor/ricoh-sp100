@@ -9,7 +9,7 @@ fi
 
 printf "identify\\t[REQUIRED] : "
 if [[ -x $(command -v identify) ]]; then
-  echo "Yes, version: $(identify -help | head -1 | cut -d" " -f3)."
+  echo "Yes, version: $(identify -version | head -1 | cut -d" " -f3-5)."
 else
   echo "No."
 fi
@@ -41,3 +41,5 @@ if [[ -x $(command -v inotifywait) ]]; then
 else
   echo "No."
 fi
+
+exit 0
