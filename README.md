@@ -21,7 +21,7 @@ I only added some PPDs and other features proposed by other people (<https://git
 
         sudo cp pstoricohddst-gdi /usr/lib/cups/filter
 
-If you have __SP 210__ or __SP 211__, copy _rastertolilo_ instead:
+   If you have __SP 210__ or __SP 211__, copy _rastertolilo_ instead:
 
         sudo cp rastertolilo /usr/lib/cups/filter
 
@@ -29,7 +29,9 @@ If you have __SP 210__ or __SP 211__, copy _rastertolilo_ instead:
 
         sudo chmod 0555 /usr/lib/cups/filter/pstoricohddst-gdi
         sudo chown root:root /usr/lib/cups/filter/pstoricohddst-gdi
-        or:
+
+   or:
+
         sudo chmod 0555 /usr/lib/cups/filter/rastertolilo
         sudo chown root:root /usr/lib/cups/filter/rastertolilo
 
@@ -37,7 +39,8 @@ If you have __SP 210__ or __SP 211__, copy _rastertolilo_ instead:
 
 7) As you finish step 6, go to the 'Printers' > _Your printer_ > 'Maintenance' > 'Print test page'. If the printer is printing and the page is not blank, you configured it correctly.
 
-8) __If the printer does not print after the first job__, then you should try to repeat the steps described here (replace <queue\> with the name of your printer):
+8) __If the printer does not print after the first job__, then you should try to repeat the steps described here (replace <queue\> with the name of your printer): 
+
 <https://wiki.ubuntu.com/DebuggingPrintingProblems#USB_printer_does_not_print_or_prints_garbage>
 
 If the issue persists, you need to reset the USB port the printer is connected to. In terminal, go into the repository and execute:
