@@ -1,8 +1,8 @@
 *PPD-Adobe: "4.3"
-*%%%% PPD file for Ricoh Aficio SP 112 with CUPS.
+*%%%% PPD file for Ricoh SP 112 with CUPS.
 *%%%% Made by DerKnerd (github.com/DerKnerd)
 *%%%% Based on PPD by madlynx (github.com/madlynx)
-*%%%% Last change: 18.01.2020
+*%%%% Last change: 30.08.2020
 *FormatVersion: "4.3"
 *FileVersion: "1.0"
 *LanguageVersion: English
@@ -10,9 +10,9 @@
 *PCFileName: "rsp112.ppd"
 *Product: "(SP 112)"
 *Manufacturer: "Ricoh"
-*ModelName: "Ricoh Aficio SP 112"
-*ShortNickName: "Ricoh Aficio SP 112"
-*NickName: "Ricoh Aficio SP 112, pstoricohddst-gdi 0.5 alpha"
+*ModelName: "Ricoh SP 112"
+*ShortNickName: "Ricoh SP 112"
+*NickName: "Ricoh SP 112, pstoricohddst-gdi 0.5 alpha"
 *PSVersion: "(3010.000) 0"
 *LanguageLevel: "3"
 *ColorDevice: False

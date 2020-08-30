@@ -1,5 +1,5 @@
 *PPD-Adobe: "4.3"
-*%%%% PPD file for Ricoh Aficio SP 202SN with CUPS.
+*%%%% PPD file for Ricoh SP 202SN with CUPS.
 *%%%% This file modified by Vladimir G Ustinov (https://github.com/v-g-ustinov)
 *%%%% Created by James Bottomley from the SP 100 file
 *%%%% by Serge V Shistarev
@@ -10,8 +10,8 @@
 *PCFileName: "rsp202sn.ppd"
 *Product: "(SP 202SN)"
 *Manufacturer: "Ricoh"
-*ModelName: "Ricoh Aficio SP 202SN"
-*ShortNickName: "Ricoh Aficio SP 202SN"
+*ModelName: "Ricoh SP 202SN"
+*ShortNickName: "Ricoh SP 202SN"
 *NickName: "SP 202SN, pstoricohddst-gdi 0.6 beta"
 *PSVersion: "(3010.000) 0"
 *LanguageLevel: "3"

@@ -1,9 +1,9 @@
 *PPD-Adobe: "4.3"
-*%%%% PPD file for Ricoh Aficio SP 204 with CUPS.
+*%%%% PPD file for Ricoh SP 204 with CUPS.
 *%%%% Created by James Bottomley from the SP 100 file
 *%%%% by Serge V Shistarev
 *%%%% Modified by mishta-real (github.com/mishta-real)
-*%%%% Last change: 18.01.2020
+*%%%% Last change: 30.08.2020
 *FormatVersion: "4.3"
 *FileVersion: "1.0"
 *LanguageVersion: English
@@ -11,9 +11,9 @@
 *PCFileName: "rsp204.ppd"
 *Product: "(SP 204)"
 *Manufacturer: "Ricoh"
-*ModelName: "Ricoh Aficio SP 204"
-*ShortNickName: "Ricoh Aficio SP 204"
-*NickName: "Ricoh Aficio SP 204 pstoricohddst-gdi"
+*ModelName: "Ricoh SP 204"
+*ShortNickName: "Ricoh SP 204"
+*NickName: "Ricoh SP 204 pstoricohddst-gdi"
 *PSVersion: "(3010.000) 0"
 *LanguageLevel: "3"
 *ColorDevice: False
