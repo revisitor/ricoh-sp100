@@ -41,13 +41,13 @@ I only added some PPDs and other features proposed by other people (<https://git
 
 8) __If the printer does not print after the first job__, then you should try to repeat the steps described here (replace <queue\> with the name of your printer): 
 
-<https://wiki.ubuntu.com/DebuggingPrintingProblems#USB_printer_does_not_print_or_prints_garbage>
+   <https://wiki.ubuntu.com/DebuggingPrintingProblems#USB_printer_does_not_print_or_prints_garbage>
 
-If the issue persists, you need to reset the USB port the printer is connected to. In terminal, go into the repository and execute:
+   If the issue persists, you need to reset the USB port the printer is connected to. In terminal, go into the repository and execute:
 
         sudo ./resetusb.sh
 
-Then try to run the job again.
+   Then try to run the job again.
 
 ## See also
 - <https://wiki.archlinux.org/index.php/CUPS/Troubleshooting>
