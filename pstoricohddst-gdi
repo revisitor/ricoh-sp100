@@ -20,8 +20,8 @@ readonly FILE_NAME=$3       # File to print
 readonly COPIES_NUMBER=$4   # Number of copies to print
 readonly OPTIONS=$5         # Job parameters
 
-# Temporary directory
-readonly TMP_DIR="/tmp/pstoricohddst-gdi-$JOB_ID"
+# Temporary directory, not world-readable/writable, with unpredictable name
+readonly TMP_DIR="$(mktemp -d --suffix=$JOB_ID)"
 
 # Date of printing
 readonly PRINT_DATE=$(date "+%Y/%m/%d %H:%M:%S")
